@@ -2,7 +2,7 @@ import os.path
 import sys
 import json
 from configuration import Configuration
-from apiConnectionInfo import ConnectionInfo, Credentials
+from apiConnectionInfo import ConnectionInfo, Credentials, ApiConnectionInfo
 from configConstants import DEFAULT_PATH, DEFAULT_CONFIG_FILE
 
 """
@@ -50,8 +50,9 @@ class ConfigManager:
             print(f"An unforeseen error occurred managing the config file(s). ({e})")
             sys.exit()
 
-        test_string = json.dumps(self.config, indent=2)  # debugging shit
-        print(test_string)
+        # Debugging:
+        # test_string = json.dumps(self.config, indent=2)
+        # print(test_string)
 
     def write_default(self):
         self.default = json.loads(DEFAULT_CONFIG_FILE)
@@ -63,36 +64,46 @@ class ConfigManager:
             config_info = json.dumps(self.config["Dataset Information"])
             return json.loads(config_info, object_hook=lambda d: Configuration(**d))
         except:
-            print("Config file does not contain dataset information.")
+            print("Config file does not contain sufficient dataset information.")
             return None
 
-    def decode_into_credentials(self):
+    def decode_into_cantabular_credentials(self):
         try:
-            creds = json.dumps(self.config["Credentials"])
+            creds = json.dumps(self.config["Cantabular Credentials"])
             return json.loads(creds, object_hook=lambda d: Credentials(**d))
         except:
-            print("Config file does not contain credentials.")
+            print("Config file does not contain sufficient Cantabular credentials.")
             return None
 
-    def decode_into_connection_info(self):
+    def decode_into_cantabular_connection_info(self):
         try:
-            conn_info = json.dumps(self.config["Connection Information"])   # gets the connection information from the config
+            conn_info = json.dumps(self.config["Cantabular Connection Information"])   # gets the connection information from the config
             return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))     # reloads this info into the connection info object
         except:
-            print("Config file does not contain connection information.")
+            print("Config file does not contain sufficient Cantabular connection information.")
+            return None
+
+    def decode_into_nomis_credentials(self):
+        try:
+            creds = json.dumps(self.config["Nomis Credentials"])
+            return json.loads(creds, object_hook=lambda d: Credentials(**d))
+        except:
+            print("Config file does not contain sufficient Nomis credentials.")
+            return None
+
+    def decode_into_nomis_connection_info(self):
+        try:
+            conn_info = json.dumps(
+                self.config["Nomis Connection Information"])  # gets the connection information from the config
+            return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))  # reloads this info into the connection info object
+        except:
+            print("Config file does not contain sufficient Nomis connection information.")
             return None
 
 
+def create_api_connection_info(credentials, connection_info):
+    return ApiConnectionInfo(credentials.username, credentials.password, credentials.key,
+                             connection_info.api, connection_info.address, connection_info.port)
 
 
-
-# testing/debuggin
-# c = ConfigManager()
-# config = c.decode_into_configuration()
-# creds = c.decode_into_credentials()
-# api_connection_info = c.decode_into_connection_info()
-#
-# print(config.validate())
-# print(creds.validate())
-# print(api_connection_info.validate())
 

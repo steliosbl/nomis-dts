@@ -11,8 +11,8 @@ class Configuration:
 
     def validate(self):
         """
-        Mandatory: input_format, output_format
-        Optional: data_type, size
+        Mandatory: input_format, output_format - To validate, check if they are in the list of acceptable formats
+        Optional: data_type, size - To validate, check if data type is either data or metadata, and size is within limit
         """
         if self.is_valid is not None:
             return self.is_valid
@@ -66,4 +66,3 @@ class Configuration:
 
         # No False returned, so must be valid
         return self.is_valid
-

@@ -1,10 +1,83 @@
-class ConnectionInfo:   # sub-class of ApiConnectionInfo
-    def __init__(self, cantabular_address, cantabular_port, nomis_address, nomis_port):
-        self.cantabular_address = cantabular_address
-        self.cantabular_port = cantabular_port
-        self.nomis_address = nomis_address
-        self.nomis_port = nomis_port
+from ipaddress import ip_address
+from socket import gethostbyname
+from urllib.parse import urlparse
+
+
+class Credentials:  # sub-class of ApiConnectionInfo
+    def __init__(self, username, password, key):
+        self.username = username
+        self.password = password
+        self.key = key
         self.is_valid = None
+
+    def validate(self):
+        """
+        All attributes are mandatory; to validate, ensure all are valid strings.
+        """
+        if self.is_valid is not None:
+            return self.is_valid
+
+        self.is_valid = True
+
+        try:
+            if self.username is not None \
+                    and isinstance(self.username, str):
+                print("Username is valid.")
+            else:
+                raise Exception
+        except:
+            print("Username invalid, none inputted.")
+            self.is_valid = False
+
+        try:
+            if self.password is not None \
+                    and isinstance(self.password, str):
+                print("Password is valid.")
+            else:
+                raise Exception
+        except:
+            print("Password invalid, none inputted.")
+            self.is_valid = False
+
+        try:
+            if self.key is not None \
+                    and isinstance(self.key, str):
+                print("Key is valid.")
+            else:
+                raise Exception
+        except:
+            print("Key invalid, none inputted.")
+            self.is_valid = False
+
+        return self.is_valid
+
+
+class ConnectionInfo:   # sub-class of ApiConnectionInfo
+    def __init__(self, api, address, port):
+        try:
+            self.address = ip_address(address)                      # First, checks if the inputted address is a valid IPv4 or IPv6 address, if so then store this and continue
+        except ValueError:
+            try:
+                self.address = ip_address(gethostbyname(address))   # Next, it checks if the address is in the form www.website.co.uk (or .com, .org, etc). If so, then resolve this to an IP address, store and continue
+            except:
+                try:
+                    urlinfo = urlparse(address)
+                    if urlinfo.netloc != '':
+                        self.address = ip_address(gethostbyname(urlinfo.netloc))    # If the inputted address is in the form http://www.website.com/path, then this will just grab the www.website.com part and resolve that to an ip address, store and continue
+                    elif "/" in urlinfo.path:                                     # However, if the inputted address is in the form www.website.com/path (so, the same as above but without the http://, then we find the index where the path begins, remove this and resolve the www.website.com part to an ip address, store and continue
+                        i = urlinfo.path.find("/")
+                        self.address = ip_address(gethostbyname(urlinfo.path[0:i]))
+                    else:
+                        self.address = ip_address(gethostbyname(urlinfo.path))
+                except:
+                    self.address = address      # If all of the above fails, then we'll simply store the address exactly as it was inputted, and this will most likely go on to be invalid, and the default (localhost) will be used instead.
+        self.port = port
+        self.api = api
+        self.is_valid = None
+        if self.api == "Cantabular":
+            self.default_port = "8491"
+        else:
+            self.default_port = "1234"  # Subject to change
 
     def validate(self):
         """
@@ -16,96 +89,25 @@ class ConnectionInfo:   # sub-class of ApiConnectionInfo
         self.is_valid = True
 
         try:
-            if self.valid_address(self.cantabular_address) is not "Neither":
-                print(f"The address {self.cantabular_address} is valid")
-            else:
-                raise Exception
+            ip_address(self.address)
+            print(f"The address {self.address} is valid")
         except:
-            print(f"The address {self.cantabular_address} not valid. Using default, 127.0.0.1, instead.")
-            self.cantabular_address = "127.0.0.1"
+            print(f"The address {self.address} not valid. Using default, 127.0.0.1, instead.")
+            self.address = "127.0.0.1"
 
         try:
-            if 0 <= int(self.cantabular_port) <= 49151:
-                print(f"The port {self.cantabular_port} is valid.")
+            if 0 <= int(self.port) <= 49151:
+                print(f"The port {self.port} is valid.")
             else:
                 raise Exception
         except:
-            print(f"The port {self.cantabular_port} is not valid, using default, 8491, instead.")
-            self.cantabular_port = "8491"
-
-        try:
-            if self.valid_address(self.nomis_address) is not "Neither":
-                print(f"The address {self.nomis_address} is valid")
-            else:
-                raise Exception
-        except:
-            print(f"The address {self.nomis_address} not valid. Using default, 127.0.0.1, instead.")
-            self.nomis_address = "127.0.0.1"
-
-        try:
-            if 0 <= int(self.nomis_port) <= 49151:
-                print(f"The port {self.nomis_port} is valid.")
-            else:
-                raise Exception
-        except:
-            print(f"The port {self.nomis_port} is not valid, using default, 1234, instead.")
-            self.nomis_port = "8491"
-
-        return self.is_valid
-
-    def valid_address(self, IP):  # Stolen from https://www.tutorialspoint.com/validate-ip-address-in-python
-        """
-        :type IP: str
-        :rtype: str
-        """
-        def isIPv4(s):
-            try:
-                return str(int(s)) == s and 0 <= int(s) <= 255
-            except:
-                return False
-        def isIPv6(s):
-            if len(s) > 4:
-                return False
-            try:
-                return int(s, 16) >= 0 and s[0] != '-'
-            except:
-                return False
-        if IP.count(".") == 3 and all(isIPv4(i) for i in IP.split(".")):
-            return "IPv4"
-        if IP.count(":") == 7 and all(isIPv6(i) for i in IP.split(":")):
-            return "IPv6"
-        return "Neither"
-
-
-class Credentials:  # sub-class of ApiConnectionInfo
-    def __init__(self, username, password, key):
-        self.username = username
-        self.password = password
-        self.key = key
-        self.is_valid = None
-
-    def validate(self):
-        if self.username is None:
-            print("Username invalid, none inputted.")
-            self.is_valid = False
-
-        if self.password is None:
-            print("Password invalid, none inputted.")
-            self.is_valid = False
-
-        if self.key is None:
-            print("Key invalid, none inputted.")
-            self.is_valid = False
+            print(f"The port {self.port} is not valid, using default, {self.default_port}, instead.")
+            self.port = self.default_port
 
         return self.is_valid
 
 
-class ApiConnectionInfo:  # WIP
-    def __init__(self, cantabular_address, cantabular_port, nomis_address, nomis_port, username, password, key):
-        self.cantabular_address = cantabular_address
-        self.cantabular_port = cantabular_port
-        self.nomis_address = nomis_address
-        self.nomis_port = nomis_port
-        self.username = username
-        self.password = password
-        self.key = key
+class ApiConnectionInfo(Credentials, ConnectionInfo):
+    def __init__(self, username, password, key, api, address, port):
+        Credentials.__init__(self, username, password, key)
+        ConnectionInfo.__init__(self, api, address, port)
