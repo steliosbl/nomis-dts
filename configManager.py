@@ -27,6 +27,9 @@ class ConfigManager:
         if not os.path.exists(DEFAULT_PATH):    # Ensures that the default path does contain the default config file. If not, then construct it
             print('No file found at the default path, new default file created.')
             self.write_default()
+        else:
+            with open(DEFAULT_PATH) as f:
+                self.default = json.loads(f.read())
 
         try:
             path = args.config_path
@@ -54,54 +57,53 @@ class ConfigManager:
         # test_string = json.dumps(self.config, indent=2)
         # print(test_string)
 
-    def write_default(self):
+    def write_default(self) -> None:
         self.default = json.loads(DEFAULT_CONFIG_FILE)
         with open(DEFAULT_PATH, 'w') as f:
             json.dump(self.default, f, indent=2)
 
-    def decode_into_configuration(self):
+    def decode_into_configuration(self) -> Configuration:
         try:
             config_info = json.dumps(self.config["Dataset Information"])
-            return json.loads(config_info, object_hook=lambda d: Configuration(**d))
         except:
-            print("Config file does not contain sufficient dataset information.")
-            return None
+            print("Config file does not contain sufficient dataset information. Using default.")
+            config_info = json.dumps(self.default["Dataset Information"])
+        return json.loads(config_info, object_hook=lambda d: Configuration(**d))
 
-    def decode_into_cantabular_credentials(self):
+    def decode_into_cantabular_credentials(self) -> Credentials:
         try:
             creds = json.dumps(self.config["Cantabular Credentials"])
-            return json.loads(creds, object_hook=lambda d: Credentials(**d))
         except:
-            print("Config file does not contain sufficient Cantabular credentials.")
-            return None
+            print("Config file does not contain sufficient Cantabular credentials. Using default")
+            creds = json.dumps(self.default["Cantabular Credentials"])
+        return json.loads(creds, object_hook=lambda d: Credentials(**d))
 
-    def decode_into_cantabular_connection_info(self):
+    def decode_into_cantabular_connection_info(self) -> ConnectionInfo:
         try:
-            conn_info = json.dumps(self.config["Cantabular Connection Information"])   # gets the connection information from the config
-            return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))     # reloads this info into the connection info object
+            conn_info = json.dumps(self.config["Cantabular Connection Information"])
         except:
-            print("Config file does not contain sufficient Cantabular connection information.")
-            return None
+            print("Config file does not contain sufficient Cantabular connection information. Using default config.")
+            conn_info = json.dumps(self.default["Cantabular Connection Information"])
+        return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))
 
-    def decode_into_nomis_credentials(self):
+    def decode_into_nomis_credentials(self) -> Credentials:
         try:
             creds = json.dumps(self.config["Nomis Credentials"])
-            return json.loads(creds, object_hook=lambda d: Credentials(**d))
         except:
             print("Config file does not contain sufficient Nomis credentials.")
-            return None
+            creds = json.dumps(self.default["Nomis Credentials"])
+        return json.loads(creds, object_hook=lambda d: Credentials(**d))
 
-    def decode_into_nomis_connection_info(self):
+    def decode_into_nomis_connection_info(self) -> ConnectionInfo:
         try:
-            conn_info = json.dumps(
-                self.config["Nomis Connection Information"])  # gets the connection information from the config
-            return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))  # reloads this info into the connection info object
+            conn_info = json.dumps(self.config["Nomis Connection Information"])  # gets the connection information from the config
         except:
             print("Config file does not contain sufficient Nomis connection information.")
-            return None
+            conn_info = json.dumps(self.default["Nomis Connection Information"])
+        return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d)) # reloads this info into the connection info object
 
 
-def create_api_connection_info(credentials, connection_info):
+def create_api_connection_info(credentials: Credentials, connection_info: ConnectionInfo) -> ApiConnectionInfo:
     return ApiConnectionInfo(credentials.username, credentials.password, credentials.key,
                              connection_info.api, connection_info.address, connection_info.port)
 

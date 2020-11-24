@@ -10,7 +10,7 @@ class Credentials:  # sub-class of ApiConnectionInfo
         self.key = key
         self.is_valid = None
 
-    def validate(self):
+    def validate(self) -> bool:
         """
         All attributes are mandatory; to validate, ensure all are valid strings.
         """
@@ -79,7 +79,7 @@ class ConnectionInfo:   # sub-class of ApiConnectionInfo
         else:
             self.default_port = "1234"  # Subject to change
 
-    def validate(self):
+    def validate(self) -> bool:
         """
         All attributes are mandatory; has defaults for address and port
         """
