@@ -2,12 +2,12 @@
   "Cantabular Credentials": {
     "username": null,
     "password": null,
-    "key": null
+    "key": 5050
   },
   "Cantabular Connection Information": {
     "api": "cantabular",
     "address": "localhost",
-    "port": "8491"
+    "port": 5050
   },
   "Nomis Credentials": {
     "username": null,

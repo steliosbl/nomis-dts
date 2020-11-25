@@ -26,7 +26,7 @@ class Credentials:  # sub-class of ApiConnectionInfo
             else:
                 raise Exception
         except:
-            print("Username invalid, none inputted.")
+            print("Username invalid, either none inputted or not a valid string.")
             self.is_valid = False
 
         try:
@@ -36,7 +36,7 @@ class Credentials:  # sub-class of ApiConnectionInfo
             else:
                 raise Exception
         except:
-            print("Password invalid, none inputted.")
+            print("Password invalid, either none inputted or not a valid string.")
             self.is_valid = False
 
         try:
@@ -46,7 +46,7 @@ class Credentials:  # sub-class of ApiConnectionInfo
             else:
                 raise Exception
         except:
-            print("Key invalid, none inputted.")
+            print("Key invalid, either none inputted or not a valid string.")
             self.is_valid = False
 
         return self.is_valid
@@ -71,7 +71,10 @@ class ConnectionInfo:   # sub-class of ApiConnectionInfo
                         self.address = ip_address(gethostbyname(urlinfo.path))
                 except:
                     self.address = address      # If all of the above fails, then we'll simply store the address exactly as it was inputted, and this will most likely go on to be invalid, and the default (localhost) will be used instead.
-        self.port = port
+        try:
+            self.port = int(port)
+        except:
+            self.port = port
         self.api = api
         self.is_valid = None
         if self.api == "Cantabular":
