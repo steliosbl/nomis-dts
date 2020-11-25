@@ -1,0 +1,16 @@
+For Nomis Connection Information port：
+49152（include number greater than 49152 but numbers like 00009999 are valid）
+empty include blank
+string(example like a,A,3+1,?%)
+float point(1.1, 1.2,1.00,0.00)
+"" and "' turns out Traceback
+negative number(-1,-1.1)
+
+
+For Cantabular Connection Information port:
+49152（include number greater than 49152 but numbers like 00009999 are valid）
+empty include blank
+string(example like a,A,3+1,?%)
+float point(1.1, 1.2,1.00,0.00)
+"" and "' turns out Traceback
+negative number(-1,-1.1)
