@@ -3,8 +3,11 @@ from socket import gethostbyname
 from urllib.parse import urlparse
 
 
-class Credentials:  # sub-class of ApiConnectionInfo
-    def __init__(self, username, password, key):
+class Credentials:
+    """
+    sub-class of ApiConnectionInfo
+    """
+    def __init__(self, username: str, password: str, key: str) -> None:
         self.username = username
         self.password = password
         self.key = key
@@ -52,35 +55,54 @@ class Credentials:  # sub-class of ApiConnectionInfo
         return self.is_valid
 
 
-class ConnectionInfo:   # sub-class of ApiConnectionInfo
-    def __init__(self, api, address, port):
+class ConnectionInfo:
+    """
+    sub-class of ApiConnectionInfo
+    """
+    def __init__(self, api: str, address: str, port: str) -> None:
         try:
-            self.address = ip_address(address)                      # First, checks if the inputted address is a valid IPv4 or IPv6 address, if so then store this and continue
+            # First, checks if the inputted address is a valid IPv4 or IPv6 address, if so then store this and continue
+            self.address = ip_address(address)
         except ValueError:
             try:
-                self.address = ip_address(gethostbyname(address))   # Next, it checks if the address is in the form www.website.co.uk (or .com, .org, etc). If so, then resolve this to an IP address, store and continue
+                # Next, check if the address is in the form www.website.co.uk (or .com, .org, etc). If so, then \
+                # resolve this to an IP address, store and continue
+                self.address = ip_address(gethostbyname(address))
             except:
                 try:
                     urlinfo = urlparse(address)
                     if urlinfo.netloc != '':
-                        self.address = ip_address(gethostbyname(urlinfo.netloc))    # If the inputted address is in the form http://www.website.com/path, then this will just grab the www.website.com part and resolve that to an ip address, store and continue
-                    elif "/" in urlinfo.path:                                     # However, if the inputted address is in the form www.website.com/path (so, the same as above but without the http://, then we find the index where the path begins, remove this and resolve the www.website.com part to an ip address, store and continue
+                        # If the inputted address is in the form http://www.website.com/path, then this will just grab \
+                        # the www.website.com part and resolve that to an ip address, store and continue
+                        self.address = ip_address(gethostbyname(urlinfo.netloc))
+                    elif "/" in urlinfo.path:
+                        # However, if the inputted address is in the form www.website.com/path (so, the same as above \
+                        # but without the http://, then we find the index where the path begins, remove this and \
+                        # resolve the www.website.com part to an ip address, store and continue
                         i = urlinfo.path.find("/")
                         self.address = ip_address(gethostbyname(urlinfo.path[0:i]))
                     else:
                         self.address = ip_address(gethostbyname(urlinfo.path))
                 except:
-                    self.address = address      # If all of the above fails, then we'll simply store the address exactly as it was inputted, and this will most likely go on to be invalid, and the default (localhost) will be used instead.
+                    # If all of the above fails, then we'll simply store the address exactly as it was inputted, \
+                    # and this will most likely go on to be invalid, and the default (localhost) will be used instead.
+                    self.address = address
         try:
             self.port = int(port)
         except:
             self.port = port
         self.api = api
         self.is_valid = None
-        if self.api == "Cantabular":
-            self.default_port = "8491"
-        else:
-            self.default_port = "1234"  # Subject to change
+        try:
+            if self.api.lower() == "cantabular":
+                self.default_port = "8491"
+            elif self.api.lower() == "nomis":
+                self.default_port = "1234"  # Subject to change
+            else:
+                raise Exception
+        except:
+            print("Invalid API!")
+            self.is_valid = False
 
     def validate(self) -> bool:
         """

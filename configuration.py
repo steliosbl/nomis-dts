@@ -2,11 +2,11 @@ from configConstants import VALID_FORMATS, MAX_SIZE
 
 
 class Configuration:
-    def __init__(self, input_format, output_format, data_type, dataset_size):
+    def __init__(self, input_format: str, output_format: str, data_type: str, dataset_size: int) -> None:
         self.input_format = input_format
         self.output_format = output_format
-        self.data_type = data_type  # i.e. data or metadata
-        self.dataset_size = dataset_size  # i.e. the number of rows in an unweighted dataset
+        self.data_type = data_type          # i.e. data or metadata
+        self.dataset_size = dataset_size    # i.e. the number of rows in an unweighted dataset
         self.is_valid = None
 
     def validate(self) -> bool:
