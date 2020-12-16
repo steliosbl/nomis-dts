@@ -7,15 +7,13 @@ class Configuration:
         self.output_format = output_format
         self.data_type = data_type          # i.e. data or metadata
         self.dataset_size = dataset_size    # i.e. the number of rows in an unweighted dataset
-        self.is_valid = None
+        self.is_valid = False
 
     def validate(self) -> bool:
         """
         Mandatory: input_format, output_format - To validate, check if they are in the list of acceptable formats
         Optional: data_type, size - To validate, check if data type is either data or metadata, and size is within limit
         """
-        if self.is_valid is not None:
-            return self.is_valid
 
         self.is_valid = True
 

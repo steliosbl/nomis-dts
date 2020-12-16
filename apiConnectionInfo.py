@@ -1,7 +1,7 @@
 from ipaddress import ip_address
 from socket import gethostbyname
 from urllib.parse import urlparse
-
+from typing import Union, Tuple
 
 class Credentials:
     """
@@ -11,14 +11,12 @@ class Credentials:
         self.username = username
         self.password = password
         self.key = key
-        self.is_valid = None
+        self.is_valid = False
 
     def validate(self) -> bool:
         """
         All attributes are mandatory; to validate, ensure all are valid strings.
         """
-        if self.is_valid is not None:
-            return self.is_valid
 
         self.is_valid = True
 
@@ -59,9 +57,9 @@ class ConnectionInfo:
     """
     sub-class of ApiConnectionInfo
     """
-    def __init__(self, api: str, address: str, port: str) -> None:
+    def __init__(self, api: str, address: str, port: Union[str, int]) -> None:
         try:
-            # First, checks if the inputted address is a valid IPv4 or IPv6 address, if so then store this and continue
+            # First, check if the inputted address is a valid IPv4 or IPv6 address, if so then store this and continue
             self.address = ip_address(address)
         except ValueError:
             try:
@@ -88,28 +86,23 @@ class ConnectionInfo:
                     # and this will most likely go on to be invalid, and the default (localhost) will be used instead.
                     self.address = address
         try:
-            self.port = int(port)
+            self.port = str(port)
         except:
-            self.port = port
+            self.port = "-1"
         self.api = api
-        self.is_valid = None
+        self.is_valid = False
         try:
-            if self.api.lower() == "cantabular":
-                self.default_port = "8491"
-            elif self.api.lower() == "nomis":
-                self.default_port = "1234"  # Subject to change
-            else:
-                raise Exception
+            if self.api.lower() == "cantabular": self.default_port = "8491"
+            elif self.api.lower() == "nomis":    self.default_port = "1234"   # Subject to change
+            else: raise Exception
         except:
-            print("Invalid API!")
-            self.is_valid = False
+            print("Unknown API; no default port set.")
+            self.default_port = "-1"
 
     def validate(self) -> bool:
         """
         All attributes are mandatory; has defaults for address and port
         """
-        if self.is_valid is not None:
-            return self.is_valid
 
         self.is_valid = True
 
@@ -118,7 +111,7 @@ class ConnectionInfo:
             print(f"The address {self.address} is valid")
         except:
             print(f"The address {self.address} not valid. Using default, 127.0.0.1, instead.")
-            self.address = "127.0.0.1"
+            self.address = ip_address("127.0.0.1")
 
         try:
             if 0 <= int(self.port) <= 49151:
@@ -126,8 +119,12 @@ class ConnectionInfo:
             else:
                 raise Exception
         except:
-            print(f"The port {self.port} is not valid, using default, {self.default_port}, instead.")
-            self.port = self.default_port
+            if self.default_port != "-1":
+                print(f"The port {self.port} is not valid, using default, {self.default_port}, instead.")
+                self.port = self.default_port
+            else:
+                print(f"The port {self.port} is not valid, and there is no default port.")
+                self.is_valid = False
 
         return self.is_valid
 
@@ -136,3 +133,9 @@ class ApiConnectionInfo(Credentials, ConnectionInfo):
     def __init__(self, username, password, key, api, address, port):
         Credentials.__init__(self, username, password, key)
         ConnectionInfo.__init__(self, api, address, port)
+
+    def get_credentials(self) -> Tuple[str, str]:
+        return (self.username, self.password)
+
+    def get_client(self) -> str:
+        return str(f'{str(self.address)}:{str(self.port)}')
