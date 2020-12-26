@@ -21,7 +21,6 @@ class VariableCategory:
                         }
                     )
 
-            return(json.dumps(self.requests, indent=4))
+            return(self.requests)
         except:
-            print("Error: Table Supplied is Null or Invalid")
-            return(False)
+            raise exception("Error: Table Supplied is Null or Invalid")

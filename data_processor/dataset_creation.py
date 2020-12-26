@@ -22,7 +22,6 @@ class DatasetCreation:
                 "restrictedAccess": False,
                 "online": True
                 }
-            return(json.dumps(self.dataset, indent=4))
+            return(self.dataset)
         else:
-            print("Error: dataset_id / dataset_title are Null or Invalid.")
-            return(False)
+            raise exception("Error: Table Supplied is Null or Invalid")

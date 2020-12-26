@@ -30,8 +30,7 @@ class DatasetObservations:
                     }
                     })
 
-            return(json.dumps(self.observations, indent=4))
+            return(self.observations)
             
         except:
-            print("Error: Table Supplied is Null or Invalid")
-            return(False)
+            raise exception("Error: Table Supplied is Null or Invalid")
