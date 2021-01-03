@@ -5,15 +5,15 @@ class Variable:
 
     def variable_requests(self):
         try:
-            for self.dimension in self.table.dims:
+            for self.dimension in self.table["dimension"]:
                 self.variable = {
-                    "name": self.dimension.name,
-                    "label": self.dimension.label,
+                    "name": self.dimension,
+                    "label": self.table["dimension"][self.dimension]["label"],
                     "metadata": None,
-                    "defaults": self.dimension.codes
+                    "defaults": self.table["dimension"][self.dimension]["category"]["index"]
                     }
                 self.requests.append(self.variable)
 
             return(self.requests)
         except:
-            raise exception("Error: Table Supplied is Null or Invalid")
+            raise Exception("Error: Table Supplied is Null or Invalid")

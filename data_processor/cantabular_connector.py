@@ -1,64 +1,43 @@
-from cantabular_client import LOGGER
-from cantabular_client import CantabularClient
-import logging
-import csv
-import json
+import requests
+from requests.auth import HTTPBasicAuth
+from pyjstat import pyjstat
 
 class CantabularConnector:
-	def __init__(self, url, creds, verify):
+	def __init__(self, url, creds):
 		self.url = url
 		self.creds = creds
-		self.verify = verify
-		self.client = CantabularClient(self.url, self.verify)
 
-	def connection(self):
-		self.handler = logging.StreamHandler()
-		self.handler.setFormatter(logging.Formatter('%(levelname)s: %(message)s'))
-		logging.getLogger().addHandler(self.handler)
-		LOGGER.setLevel(logging.INFO)
+		if len(self.creds) != 2:
+		    raise Exception('Invalid credentials file')
 
-		# Create an instance of CantabularClient and pass in
-		# the URL of the Cantabular server. The verify parameter
-		# can be set to False to disable TLS certificate verification
-		# or to the name (including path) of a CA bundle file.
-
-		# Store your credentials in a text file with
-		# a single line of the format:
-		# username,password
-		self.credentials = self.creds
-
-		if len(self.credentials) != 2:
-		    print('Invalid credentials fle')
-		    raise Exception
-
-		# Log in to gain access to the API. A requests.Session
-		# instance is used to keep track of authentication tokens.
-		try:
-		    self.client.login(self.credentials[0], self.credentials[1])
-		except Exception as e:
-		    print("Error logging in: ", e)
-		    raise
-		    
-		print('Successfully logged into: ', self.client.base_request)
-
-	def query(self, variables, dataset):
-		self.variables = variables
+	def query(self, dataset, variables):
 		self.dataset = dataset
-		try:
-		    self.cb = self.client.codebook(self.dataset, get_categories=True)
-		except Exception as e:
-		    print('Error getting codebook: ', e)
-		    raise  
+		self.variables = variables
 
-		# Perform a query using the codebook and three variables.
-		# As part of the query method a call will be made to the API
-		# to get detailed category information for the variables. This
-		# information is stored in the codebook and reused for future
-		# queries using any of the variables.https://tljh.sensiblecode.io/user/scc/kernelspecs/python3/logo-64x64.png
-		try:
-		    self.table = self.client.query(self.cb, variables)
-		except Exception as e:
-		    print('Error doing query: ', e)
-		    raise
+		# Perform a query to query-json-stat endpoint using supplied BASE_URL,
+		# DATASET and VARIABLES. The server is secured using HTTP Basic Authentication.
+		self.QUERY = self.url + '/v8/query-json-stat/%s?%s' % (
+		    self.dataset, '&'.join([f'v={v}' for v in self.variables]))
+
+		self.response = requests.get(self.QUERY, auth=HTTPBasicAuth(self.creds[0], self.creds[1]))
+
+		# Check for an errored response. This may occur due to network issues, if the query
+		# contained invalid values, or if the entire ouput table was blocked for disclosure
+		# control reasons.
+		if not self.response:
+		    raise Exception(f'HTTP error: {self.response.content}')
+
+		# Load response into a pystat dataframe.
+		self.table = pyjstat.Dataset.read(self.response.content.decode('utf-8'))
+
+		# Report any categories in the rule variable that were blocked by disclosure
+		# control rules.
+		self.blocked_categories = self.table['extension']['cantabular']['blocked']
+		if self.blocked_categories:
+		    RULE_VAR_NAME, RULE_VAR = list(blocked_categories.items())[0]
+		    print(f'The following categories of {RULE_VAR_NAME} failed disclosure control checks:')
+		    print(', '.join(RULE_VAR['category']['label'].values()))
+		    print('')
+
 
 		return(self.table)

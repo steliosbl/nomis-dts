@@ -5,12 +5,12 @@ class VariableCategory:
 
     def category_requests(self):
         try:
-            for self.dimension in self.table.dims:
-                for self.category, self.label in zip(self.dimension.codes, self.dimension.labels):
+            for self.dimension in self.table["dimension"]:
+                for self.label in self.table["dimension"][self.dimension]["category"]["label"]:
                     self.requests.append(
                         {
-                        "code": self.category,
-                        "title": self.label,
+                        "code": self.label,
+                        "title": self.table["dimension"][self.dimension]["category"]["label"][self.label],
                         "ancestors": None,
                         "metadata": None,
                         "typeId": None,
@@ -23,4 +23,4 @@ class VariableCategory:
 
             return(self.requests)
         except:
-            raise exception("Error: Table Supplied is Null or Invalid")
+            raise Exception("Error: Table Supplied is Null or Invalid")

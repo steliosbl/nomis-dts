@@ -24,4 +24,4 @@ class DatasetCreation:
                 }
             return(self.dataset)
         else:
-            raise exception("Error: Table Supplied is Null or Invalid")
+            raise Exception("Error: Table Supplied is Null or Invalid")
