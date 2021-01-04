@@ -12,7 +12,7 @@ Most likely, print statements will be simply replaced when the log manager is av
 
 class ArgsPlaceholder:
     def __init__(self):
-        self.config_path = "./test.json"
+        self.config_path = ""
 
 
 args = ArgsPlaceholder()

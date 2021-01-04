@@ -58,33 +58,34 @@ class ConnectionInfo:
     sub-class of ApiConnectionInfo
     """
     def __init__(self, api: str, address: str, port: Union[str, int]) -> None:
+        self.address = address
         try:
             # First, check if the inputted address is a valid IPv4 or IPv6 address, if so then store this and continue
-            self.address = ip_address(address)
+            self.ip_address = ip_address(address)
         except ValueError:
             try:
                 # Next, check if the address is in the form www.website.co.uk (or .com, .org, etc). If so, then \
                 # resolve this to an IP address, store and continue
-                self.address = ip_address(gethostbyname(address))
+                self.ip_address = ip_address(gethostbyname(address))
             except:
                 try:
                     urlinfo = urlparse(address)
                     if urlinfo.netloc != '':
                         # If the inputted address is in the form http://www.website.com/path, then this will just grab \
                         # the www.website.com part and resolve that to an ip address, store and continue
-                        self.address = ip_address(gethostbyname(urlinfo.netloc))
+                        self.ip_address = ip_address(gethostbyname(urlinfo.netloc))
                     elif "/" in urlinfo.path:
                         # However, if the inputted address is in the form www.website.com/path (so, the same as above \
                         # but without the http://, then we find the index where the path begins, remove this and \
                         # resolve the www.website.com part to an ip address, store and continue
                         i = urlinfo.path.find("/")
-                        self.address = ip_address(gethostbyname(urlinfo.path[0:i]))
+                        self.ip_address = ip_address(gethostbyname(urlinfo.path[0:i]))
                     else:
-                        self.address = ip_address(gethostbyname(urlinfo.path))
+                        self.ip_address = ip_address(gethostbyname(urlinfo.path))
                 except:
                     # If all of the above fails, then we'll simply store the address exactly as it was inputted, \
                     # and this will most likely go on to be invalid, and the default (localhost) will be used instead.
-                    self.address = address
+                    self.ip_address = address
         try:
             self.port = str(port)
         except:
@@ -107,11 +108,11 @@ class ConnectionInfo:
         self.is_valid = True
 
         try:
-            ip_address(self.address)
+            ip_address(self.ip_address)
             print(f"The address {self.address} is valid")
         except:
             print(f"The address {self.address} not valid. Using default, 127.0.0.1, instead.")
-            self.address = ip_address("127.0.0.1")
+            self.address = "localhost"
 
         try:
             if 0 <= int(self.port) <= 49151:

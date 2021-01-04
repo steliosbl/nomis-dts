@@ -1,22 +1,22 @@
 {
   "Cantabular Credentials": {
-    "username": null,
-    "password": null,
-    "key": null
+    "username": "durham.project",
+    "password": " extra.carrot.slowly",
+    "key": 1234
   },
   "Cantabular Connection Information": {
     "api": "cantabular",
-    "address": "localhost",
+    "address": "https://ftb.ons.sensiblecode.io",
     "port": "8491"
   },
   "Nomis Credentials": {
-    "username": null,
-    "password": null,
+    "username": "user",
+    "password": "pass",
     "key": null
   },
   "Nomis Connection Information": {
     "api": "nomis",
-    "address": "https://www.nomisweb.co.uk/api/v2",
+    "address": "https://virtserver.swaggerhub.com/SpencerHedger/Nomis-API/2.01",
     "port": "1234"
   },
   "Dataset Information": {
