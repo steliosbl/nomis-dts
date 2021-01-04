@@ -9,7 +9,7 @@ class DatasetCreation:
         #This is just for testing purposes. Once we know the style of the IDs we can change this.
         #dataset_id should start with "syn" and end with a 5 digit number e.g. "syn01100".
         #dataset_title should be no longer than 10 characters long e.g. "Test 1".
-        if dataset_id[0:3] == "syn" and len(dataset_id) == 8 and len(dataset_title) <= 10:
+        if self.dataset_id[0:3] == "syn":
 
             self.dataset = {
                 "id": self.dataset_id,
