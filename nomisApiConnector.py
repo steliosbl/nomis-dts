@@ -190,7 +190,7 @@ class NomisApiConnector:
                 print("Error: Invalid name.")
                 return False
             # Make request: Lists a specific variable.
-            res = self.session.put(f'{self.client}/variables/{name}')
+            res = self.session.get(f'{self.client}/variables/{name}')
             if res.status_code == 200: print("SUCCESS: Queried variable does exist.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Variable not found.")
@@ -200,7 +200,7 @@ class NomisApiConnector:
         return False
 
     # PUT | VARIABLE-ADMIN
-    def create_variable(self, name: str, var: list) -> bool:
+    def create_variable(self, name: str, var: dict) -> bool:
         """
         name: Must be a valid string, in correct format.
         var: Object representing the variable. Must be a valid array.
@@ -209,7 +209,7 @@ class NomisApiConnector:
             if not isinstance(name, str):
                 print("Error: Invalid name.")
                 return False
-            elif not isinstance(var, list):
+            elif not isinstance(var, dict):
                 print("Error: Invalid variable object.")
                 return False
             # Make request: Update/create a variable

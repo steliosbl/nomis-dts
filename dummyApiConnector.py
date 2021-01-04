@@ -264,7 +264,7 @@ class DummyApiConnector:
                 print("Error: Invalid name.")
                 return False
             # Make request: Lists a specific variable.
-            res = self.session.put(f'{self.client}/variables/{name}')
+            res = self.session.get(f'{self.client}/variables/{name}')   # changed from put to get oops
 
             print('{}\n{}\n{}\nBody: {}\n'.format(
                 '-----------VARIABLE_EXISTS-----------',
@@ -284,16 +284,16 @@ class DummyApiConnector:
 
 
     # PUT | VARIABLE-ADMIN
-    def create_variable(self, name: str, var: list) -> bool:
+    def create_variable(self, name: str, var: dict) -> bool:
         """
         name: Must be a valid string, in correct format.
-        var: Object representing the variable. Must be a valid array.
+        var: Object representing the variable. Must be a valid dict object.
         """
         try:
             if not isinstance(name, str):
                 print("Error: Invalid name.")
                 return False
-            elif not isinstance(var, list):
+            elif not isinstance(var, dict):
                 print("Error: Invalid variable object.")
                 return False
 
