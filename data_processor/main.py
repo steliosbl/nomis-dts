@@ -70,7 +70,7 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 
 		nomis_connector.append_dataset_observations(dataset_id, observations_requests)
 
-		print(f"\nSUCCESS\n A dataset with the ID {dataset_id} has been CREATED successfully.")
+		print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been CREATED successfully.")
 
 	else:
 		raise Exception("A dataset with this ID already exists.")
@@ -147,7 +147,7 @@ def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dat
 
 		nomis_connector.overwrite_dataset_observations(dataset_id, observations_requests)
 
-		print(f"\nSUCCESS\n A dataset with the ID {dataset_id} has been UPDATED successfully.")
+		print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been UPDATED successfully.")
 
 	else:
 		raise Exception("A dataset with this ID does NOT exist.")
@@ -192,6 +192,7 @@ print(nom.port)
 #################################################################
 
 
+##########EXAMPLES##########
 
 nomis_creds = (nom.username, nom.password)
 nomis_addr = nom.address
@@ -199,31 +200,6 @@ nomis_addr = nom.address
 cantabular_addr = cant.address
 cantabular_creds = [cant.username, cant.password]
 
-#new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, "syn123", "TEST 1", ['COUNTRY', 'SEX', "HEALTH"], 'Usual-Residents')
+new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, "syn123", "TEST 1", ['COUNTRY', 'SEX', "HEALTH"], 'Usual-Residents')
 
-update_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, "syn123", ['COUNTRY', 'SEX', "HEALTH"], 'Usual-Residents')
-
-############# Example ##############
-# cantabularConnector = CantabularConnector('https://ftb-api-ext.ons.sensiblecode.io', cantabular_creds)
-# table = cantabularConnector.query("Usual-Residents", ["COUNTRY", "SEX"])
-
-# print(table)
-
-# variable = Variable(table)
-# variables = variable.variable_requests()
-# print(json.dumps(variables, indent=3))
-
-# variableCategory = VariableCategory(table)
-# categories = variableCategory.category_requests()
-# print(json.dumps(categories, indent=3))
-
-# datsetObservations = DatasetObservations(table)
-# observations = datsetObservations.observations_request()
-# print(json.dumps(observations, indent=3))
-
-# print(PYJSTAT_DATAFRAME["value"])
-
-
-
-
-#print(PYJSTAT_DATAFRAME[0])
+#update_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, "syn123", ['COUNTRY', 'SEX', "HEALTH"], 'Usual-Residents')
