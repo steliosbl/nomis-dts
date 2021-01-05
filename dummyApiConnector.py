@@ -242,7 +242,7 @@ class DummyApiConnector:
                 '-----------OVERWRITE_DATASET_OBSERVATIONS-----------',
                 res.request.method + ' ' + res.request.url,
                 '\n'.join('{}: {}'.format(k, v) for k, v in res.headers.items()),
-                res.request.body,
+                '\n' + json.dumps(obs_arr, indent=2),
             ))
 
             print("Response: ")
@@ -367,7 +367,7 @@ class DummyApiConnector:
                 '-----------CREATE_VARIABLE_CATEGORY-----------',
                 res.request.method + ' ' + res.request.url,
                 '\n'.join('{}: {}'.format(k, v) for k, v in res.headers.items()),
-                res.request.body,
+                '\n' +json.dumps(cat_arr, indent=2),
             ))
 
             print("Response: ")
