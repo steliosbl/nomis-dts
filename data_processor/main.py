@@ -46,7 +46,6 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 					else:
 						continue
 
-				
 				#Create the categories for this new variable as well.
 				requests = []
 				for category in table["dimension"][variable]["category"]["index"]:
@@ -71,8 +70,87 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 
 		nomis_connector.append_dataset_observations(dataset_id, observations_requests)
 
-		print("SUCCESS")
-		print(table)
+		print(f"\nSUCCESS\n A dataset with the ID {dataset_id} has been CREATED successfully.")
+
+	else:
+		raise Exception("A dataset with this ID already exists.")
+
+def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, query_variables, query_dataset):
+	#Query cantabular using given variables
+	cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
+	table = cantabular_connector.query(query_dataset, query_variables)
+
+	#Create instance of nomis connector
+	nomis_connector = DummyApiConnector(nomis_url, nomis_creds)
+
+	#Check to see if a dataset already exists with this id
+	dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
+
+	if dataset_exists_code == True:
+		assigned_variables_json = nomis_connector.get_dataset_dimensions(dataset_id)
+		assigned_variables = []
+		non_assigned_variables = []
+
+		#Get all of the currently assigned variables in a list by variable name
+		for variable in assigned_variables:
+			assigned_variables.append(variable["variable"]["name"])
+			
+		#Check to see if any of the variables in the observation request 
+		for variable in query_variables:
+			if variable not in assigned_variables:
+				non_assigned_variables.append(variable)
+
+		#Create any new variables and assign all non assigned variables to the dataset
+		if len(non_assigned_variables) > 0:
+
+			#Create the variable creation request bodies
+			variable_creation = Variable(table)
+			variable_request_body = variable_creation.variable_requests()
+
+			#Create the category request bodies
+			category_creation = VariableCategory(table)
+			category_request_body = category_creation.category_requests()
+
+			#Check to see variables already exist for the given dimensions
+			for variable in query_variables:
+				variable_exists_code = nomis_connector.variable_exists(variable)
+
+				#IF the variable does NOT exist then create it
+				if variable_exists_code == True: #mock server always returns True so this is for testing purposes.
+					for request in variable_request_body:
+						if request["name"] == variable:
+							nomis_connector.create_variable(variable, request)
+						else:
+							continue
+					
+					#Create the categories for this new variable as well.
+					requests = []
+					for category in table["dimension"][variable]["category"]["index"]:
+						for request in category_request_body:
+							if category == request["code"] and table["dimension"][variable]["category"]["label"][category] == request["title"]:
+								requests.append(request)
+							else:
+								continue
+					nomis_connector.create_variable_category(variable, requests)
+				else:
+					continue
+
+			#Assign dimensions to dataset
+			assign_dimensions = AssignDimensions(table)
+			assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
+
+			nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
+		
+		#Append observations into dataset
+		observations = DatasetObservations(table)
+		observations_requests = observations.observations_request()
+
+		nomis_connector.overwrite_dataset_observations(dataset_id, observations_requests)
+
+		print(f"\nSUCCESS\n A dataset with the ID {dataset_id} has been UPDATED successfully.")
+
+	else:
+		raise Exception("A dataset with this ID does NOT exist.")
 
 ##############################
 c = ConfigManager()
@@ -121,17 +199,9 @@ nomis_addr = nom.address
 cantabular_addr = cant.address
 cantabular_creds = [cant.username, cant.password]
 
-new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, "syn123", "TEST 1", ['COUNTRY', 'SEX', "HEALTH"], 'Usual-Residents')
+#new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, "syn123", "TEST 1", ['COUNTRY', 'SEX', "HEALTH"], 'Usual-Residents')
 
-
-
-
-
-
-
-
-
-
+update_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, "syn123", ['COUNTRY', 'SEX', "HEALTH"], 'Usual-Residents')
 
 ############# Example ##############
 # cantabularConnector = CantabularConnector('https://ftb-api-ext.ons.sensiblecode.io', cantabular_creds)
