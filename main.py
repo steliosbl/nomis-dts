@@ -5,7 +5,7 @@ from dataset_observations import DatasetObservations
 from dataset_creation import DatasetCreation
 from assign_dimensions import AssignDimensions
 from cantabular_connector import CantabularConnector
-from dummyApiConnector import DummyApiConnector
+from nomisApiConnector import NomisApiConnector
 from configManager import ConfigManager
 from args_manager import ArgsManager
 import json
@@ -16,13 +16,15 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 	table = cantabular_connector.query(query_dataset, query_variables)
 
 	#Create instance of nomis connector
-	nomis_connector = DummyApiConnector(nomis_url, nomis_creds)
+	nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
 
 	#Check to see if a dataset already exists with this id
 	dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
 
-	if dataset_exists_code == True:
+	if dataset_exists_code == False:
 		#Create a new dataset with given id
+
+		print("-----DATASET CREATION-----")
 		dataset_creation = DatasetCreation(dataset_id, dataset_title)
 		dataset_request_body = dataset_creation.dataset_request()
 		nomis_connector.create_dataset(dataset_id, dataset_request_body)
@@ -36,12 +38,13 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 		category_request_body = category_creation.category_requests()
 
 		#Check to see variables already exist for the given dimensions
+		print("\n-----VARIABLE CREATION-----")
 		for variable in query_variables:
 
 			variable_exists_code = nomis_connector.variable_exists(variable)
 
 			#IF the variable does NOT exist then create it
-			if variable_exists_code == True: #mock server always returns True so this is for testing purposes.
+			if variable_exists_code == False: #mock server always returns True so this is for testing purposes.
 				for request in variable_request_body:
 					if request["name"] == variable:
 						nomis_connector.create_variable(variable, request)
@@ -60,13 +63,14 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 
 			else:
 				continue
-
+		print("\n-----ASSIGNING DIMENSIONS-----")
 		#Assign dimensions to dataset
 		assign_dimensions = AssignDimensions(table)
 		assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
 
 		nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
 
+		print("\n-----APPENDING OBSERVATIONS-----")
 		#Append observations into dataset
 		observations = DatasetObservations(table)
 		observations_requests = observations.observations_request()
@@ -84,12 +88,14 @@ def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dat
 	table = cantabular_connector.query(query_dataset, query_variables)
 
 	#Create instance of nomis connector
-	nomis_connector = DummyApiConnector(nomis_url, nomis_creds)
+	nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
 
 	#Check to see if a dataset already exists with this id
 	dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
 
 	if dataset_exists_code == True:
+
+		print("\n-----RETRIEVING DIMENSIONS-----")
 		assigned_variables_json = nomis_connector.get_dataset_dimensions(dataset_id)
 		assigned_variables = []
 		non_assigned_variables = []
@@ -115,11 +121,12 @@ def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dat
 			category_request_body = category_creation.category_requests()
 
 			#Check to see variables already exist for the given dimensions
+			print("\n-----VARIABLE CREATION-----")
 			for variable in query_variables:
 				variable_exists_code = nomis_connector.variable_exists(variable)
 
 				#IF the variable does NOT exist then create it
-				if variable_exists_code == True: #mock server always returns True so this is for testing purposes.
+				if variable_exists_code == False: #mock server always returns True so this is for testing purposes.
 					for request in variable_request_body:
 						if request["name"] == variable:
 							nomis_connector.create_variable(variable, request)
@@ -139,12 +146,14 @@ def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dat
 					continue
 
 			#Assign dimensions to dataset
+			print("\n-----OVERWRITING DIMENSIONS-----")
 			assign_dimensions = AssignDimensions(table)
 			assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
-
+			
 			nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
 		
 		#Append observations into dataset
+		print("\n-----OVERWRITING OBSERVATIONS-----")
 		observations = DatasetObservations(table)
 		observations_requests = observations.observations_request()
 
@@ -199,7 +208,7 @@ print(cant.port)
 print("")
 print("Nomis Complete API Connecton Information")
 nom = c.create_api_connection_info(nom_creds, nom_conn)
-print(nom.port)
+print(nom.port + "\n")
 #################################################################
 
 ##########EXAMPLES##########
@@ -210,9 +219,10 @@ nomis_addr = nom.address
 cantabular_addr = cant.address
 cantabular_creds = [cant.username, cant.password]
 
-nomis_connector = DummyApiConnector(nomis_addr, nomis_creds)
+nomis_connector = NomisApiConnector(nomis_addr, nomis_creds)
 
 is_update = "y"
+
 if nomis_connector.dataset_exists(args.dataset_id) == True:
 
 	if args.y_flag == False:
