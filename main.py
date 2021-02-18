@@ -149,15 +149,17 @@ def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dat
 			print("\n-----OVERWRITING DIMENSIONS-----")
 			assign_dimensions = AssignDimensions(table)
 			assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
-			
+
 			nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
 		
 		#Append observations into dataset
 		print("\n-----OVERWRITING OBSERVATIONS-----")
+		print(table)
 		observations = DatasetObservations(table)
-		observations_requests = observations.observations_request()
+		observations_request = observations.observations_request()
+		print(json.dumps(observations_request, indent=2))
 
-		nomis_connector.overwrite_dataset_observations(dataset_id, observations_requests)
+		nomis_connector.overwrite_dataset_observations(dataset_id, observations_request)
 
 		print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been UPDATED successfully.")
 

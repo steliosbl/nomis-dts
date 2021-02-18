@@ -139,7 +139,6 @@ class NomisApiConnector:
 
             # Make request: Assign dimensions to this dataset.
             headers={'Content-type':'application/json', 'Accept':'application/json'}
-            print(json.dumps(dims, indent = 2))
             res = self.session.put(f'{self.client}/datasets/{id}/dimensions', data=json.dumps(dims), headers = headers, verify = False)
             if res.status_code == 200: print("SUCCESS: Dimensions assigned successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
@@ -181,7 +180,7 @@ class NomisApiConnector:
             if not isinstance(id, str):
                 print("Error: Invalid id.")
                 return False
-            elif not isinstance(obs_arr, list):
+            elif not isinstance(obs_arr, dict):
                 print("Error: Invalid observations array.")
                 return False
             # Make request: Create or update all observation values.
