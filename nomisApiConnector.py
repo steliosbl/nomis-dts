@@ -109,10 +109,10 @@ class NomisApiConnector:
     def get_dataset_dimensions(self, id: str) -> Union[list, bool]:
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id.")
                 return False
             # Make the request: List dimensions available from a dataset.
-            res = self.session.get(f'{self.client}/datasets/{id}/dimensions', verify = False)
+            res = self.session.get(f'{self.client}/Datasets/{id}/dimensions', verify = False)
             if res.status_code == 200:
                 # If the request is successful, return the dimensions in the form of an array.
                 print("SUCCESS: Dataset dimensions retrieved successfully.")
@@ -139,7 +139,7 @@ class NomisApiConnector:
 
             # Make request: Assign dimensions to this dataset.
             headers={'Content-type':'application/json', 'Accept':'application/json'}
-            res = self.session.put(f'{self.client}/datasets/{id}/dimensions', data=json.dumps(dims), headers = headers, verify = False)
+            res = self.session.put(f'{self.client}/Datasets/{id}/dimensions', data=json.dumps(dims), headers = headers, verify = False)
             if res.status_code == 200: print("SUCCESS: Dimensions assigned successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Dataset not found.")
@@ -162,7 +162,7 @@ class NomisApiConnector:
                 return False
             # Make request: Append observation values into this dataset.
             headers={'Content-type':'application/json', 'Accept':'application/json'}
-            res = self.session.post(f'{self.client}/datasets/{id}/observations', data=json.dumps(obs), headers = headers, verify = False)
+            res = self.session.post(f'{self.client}/Datasets/{id}/values', data=json.dumps(obs), headers = headers, verify = False)
             if res.status_code == 200: print("SUCCESS: Observations appended successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Dataset not found.")
@@ -178,14 +178,14 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id.")
                 return False
             elif not isinstance(obs_arr, dict):
-                print("Error: Invalid observations array.")
+                print("ERROR: Invalid observations array.")
                 return False
             # Make request: Create or update all observation values.
             headers={'Content-type':'application/json', 'Accept':'application/json'}
-            res = self.session.put(f'{self.client}/datasets/{id}/observations', data=json.dumps(obs_arr), headers = headers, verify = False)
+            res = self.session.put(f'{self.client}/Datasets/{id}/values', data=json.dumps(obs_arr), headers = headers, verify = False)
             if res.status_code == 200: print("SUCCESS: Observations replaced successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Dataset not found.")
@@ -201,7 +201,7 @@ class NomisApiConnector:
                 print("ERROR: Invalid name.")
                 return False
             # Make request: Lists a specific variable.
-            res = self.session.get(f'{self.client}/variables/{name}', verify = False)
+            res = self.session.get(f'{self.client}/Variables/{name}', verify = False)
             if res.status_code == 200: print("Queried variable does exist.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("Variable not found.")
@@ -226,7 +226,7 @@ class NomisApiConnector:
 
             # Make request: Update/create a variable
             headers={'Content-type':'application/json', 'Accept':'application/json'}
-            res = self.session.put(f'{self.client}/variables/{name}', json.dumps(var), headers = headers, verify = False)
+            res = self.session.put(f'{self.client}/Variables/{name}', json.dumps(var), headers = headers, verify = False)
             if res.status_code == 200: print("SUCCESS: Variable created successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Variable not found.")
@@ -242,7 +242,7 @@ class NomisApiConnector:
                 print("ERROR: Invalid name.")
                 return False
             # Make request: Lists the categories in a specific variable.
-            res = self.session.get(f'{self.client}/variables/{name}/categories')
+            res = self.session.get(f'{self.client}/Variables/{name}/categories')
             if res.status_code == 200: print("SUCCESS: Queried variable categories retrieved.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Variable not found.")
@@ -258,17 +258,17 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name.")
                 return False
             elif not isinstance(cat_arr, list):
-                print("Error: Invalid category array.")
+                print("ERROR: Invalid category array.")
                 return False
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name.")
                 return False
             # Make request: Add categories to variable.
             headers={'Content-type':'application/json', 'Accept':'application/json'}
-            res = self.session.put(f'{self.client}/variables/{name}/categories', data=json.dumps(cat_arr), headers = headers, verify = False )
+            res = self.session.put(f'{self.client}/Variables/{name}/categories', data=json.dumps(cat_arr), headers = headers, verify = False )
             if res.status_code == 200: print("SUCCESS: Variable categories created successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Variable not found.")
@@ -284,18 +284,18 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name.")
                 return False
             elif not isinstance(code, str):
                 # try: code = str(code)
                 # except:
-                print("Error: Code invalid type.")
+                print("ERROR: Code invalid type.")
                 return False
             elif not isinstance(cat, dict):
-                print("Error: Invalid category array.")
+                print("ERROR: Invalid category array.")
                 return False
             # Make request: Partially update category.
-            res = self.session.patch(f'{self.client}/variables/{name}/categories/{code}', data=json.dumps(cat))
+            res = self.session.patch(f'{self.client}/Variables/{name}/categories/{code}', data=json.dumps(cat))
             if res.status_code == 200: print("SUCCESS: Variable category updated successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
             elif res.status_code == 404: print("ERROR: Variable not found.")

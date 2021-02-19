@@ -72,7 +72,7 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 
 		print("\n-----APPENDING OBSERVATIONS-----")
 		#Append observations into dataset
-		observations = DatasetObservations(table)
+		observations = DatasetObservations(table, dataset_id)
 		observations_requests = observations.observations_request()
 
 		nomis_connector.append_dataset_observations(dataset_id, observations_requests)
@@ -155,7 +155,7 @@ def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dat
 		#Append observations into dataset
 		print("\n-----OVERWRITING OBSERVATIONS-----")
 		print(table)
-		observations = DatasetObservations(table)
+		observations = DatasetObservations(table, dataset_id)
 		observations_request = observations.observations_request()
 		print(json.dumps(observations_request, indent=2))
 
