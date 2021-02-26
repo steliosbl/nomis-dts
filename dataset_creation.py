@@ -20,6 +20,7 @@ class DatasetCreation:
                 "isFlagged": False,
                 "derivedFrom": None,
                 "restrictedAccess": False,
+                "minimumRound": 0,
                 "online": True
                 }
             return(self.dataset)

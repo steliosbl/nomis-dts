@@ -14,16 +14,15 @@ class AssignDimensions:
                                         "name": self.dimension,
                                         "view": None
                                     },
-                                    "role": "measures",
+                                    "role": "Measures",
                                     "canFilter": True,
                                     "defaults": self.table["dimension"][self.dimension]["category"]["index"],
                                     "database": {
                                         "isKey": False,
-                                        "index": None,
+                                        "index": 0,
                                         "defaultView": None,
                                         "discontinuities": None
                                     },
-                                    "metadata": None
                                 }
                 self.requests.append(self.variable)
 

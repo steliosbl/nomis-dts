@@ -34,9 +34,9 @@ class CantabularConnector:
 		# control rules.
 		self.blocked_categories = self.table['extension']['cantabular']['blocked']
 		if self.blocked_categories:
-		    RULE_VAR_NAME, RULE_VAR = list(blocked_categories.items())[0]
-		    print(f'The following categories of {RULE_VAR_NAME} failed disclosure control checks:')
-		    print(', '.join(RULE_VAR['category']['label'].values()))
+		    self.RULE_VAR_NAME, self.RULE_VAR = list(self.blocked_categories.items())[0]
+		    print(f'The following categories of {self.RULE_VAR_NAME} failed disclosure control checks:')
+		    print(', '.join(self.RULE_VAR['category']['label'].values()))
 		    print('')
 
 

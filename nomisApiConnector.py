@@ -1,21 +1,30 @@
+from typing import Union, Tuple, Dict, Any
 import requests
 import json
-from typing import Tuple, Union
-
-
 # Draft of Nomis API Connector with the basic functionality
 
+# 21/02/2021 changes:
+# - dataset_exits() renamed to get_dataset(); new dataset_exists() calls get_dataset() and returns a bool
+# - Alterations to the validate_ds() method to acknowledge metadata
+# - More informative error messages
+
+
+requests.packages.urllib3.disable_warnings() 
+
+
 class NomisApiConnector:
-    def __init__(self, client: str, credentials: Tuple[str, str]) -> None:
-        self.client = client
+    def __init__(self, address: str, credentials: Tuple[str, str], port: Union[str, None] = "5001") -> None:
+        self.client = f"{str(address)}:{str(port)}" if port is not None else str(address)
         self.session = requests.Session()   # Begin a session
         self.session.auth = credentials
 
     def __enter__(self) -> 'NomisApiConnector':
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+    def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         requests.Session.close(self.session)
+
+    # Datasets
 
     def validate_ds(self, ds: dict) -> bool:
         """
@@ -24,12 +33,10 @@ class NomisApiConnector:
             - Ensure the type is correct/valid
         """
         try:
-            # Type-checking
+            # Type-checking: todo: also check for valid uuid
             if not isinstance(ds, dict)                                 \
                     or not isinstance(ds["id"], str)                    \
                     or not isinstance(ds["title"], str)                 \
-                    or (ds["metadata"] is not None
-                        and not isinstance(ds["metadata"], str))        \
                     or (ds["contactId"] is not None
                         and not isinstance(ds["contactId"], str))       \
                     or not isinstance(ds["isAdditive"], bool)           \
@@ -40,34 +47,49 @@ class NomisApiConnector:
                     or not isinstance(ds["online"], bool):
                 raise TypeError
             elif not len(ds) != 12: raise KeyError
-            print("Success: Dataset Validated")
+            print(f"SUCCESS: Dataset with {ds['id']} validated.")
             return True
-        except TypeError: print("Error: Invalid type(s).")
-        except KeyError: print("Error: Dataset does not contain sufficient elements.")
-        except Exception as e: print(f"Error: {str(e)}")
+        except TypeError: print("ERROR: Invalid type(s).")
+        except KeyError: print("ERROR: Dataset does not contain sufficient elements.")
+        except Exception as e: print(f"ERROR: {str(e)}")
         return False
 
     # GET | PUBLIC
-    def dataset_exists(self, id: str) -> bool:
+    def get_dataset(self, id: str) -> Union[bool, Dict[str, str]]:
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id, must be a string.")
                 return False
 
             # Make the request: Get dataset definition.
-            res = self.session.get(f'{self.client}/datasets/{id}')
-
+            res = self.session.get(f'{self.client}/Datasets/{id}', verify=False)
             # If the dataset exists, the response code will be 200; other responses correspond to the API documentation.
-            if res.status_code == 200: print("SUCCESS: Dataset exists.")
+
+            if res.status_code == 200:
+                print("SUCCESS: Dataset found.")
+                return res.json()
             elif res.status_code == 400: print("ERROR: Bad input parameter.")
-            elif res.status_code == 404: print("ERROR: Dataset doesn't exist.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Dataset (id: {id}) not found.")
+            else: raise Exception("Unexpected response.")
 
             # .ok will return True if the status code indicates the request was a success, otherwise will return False.
             return res.ok
 
         # Will except if there is an issue with the request or the response is unexpected.
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to clarify a dataset's existence.")
+        except Exception as e:
+            # print(res)
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to clarify a dataset's existence. "
+                  f"({str(e)}")
+        return False
+
+    # GET | PUBLIC
+    def dataset_exists(self, id: str) -> bool:
+        try:
+            res = self.get_dataset(id)
+            return False if res is False else True
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to clarify a dataset's existence. "
+                  f"({str(e)}")
         return False
 
     # PUT | DATASET-ADMIN - WILL REQUIRE AUTH.
@@ -77,66 +99,75 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id, must be a string.")
                 return False
             elif not isinstance(ds, dict):
-                print("Error: Invalid dataset.")
+                print("ERROR: Invalid dataset.")
                 return False
             elif not self.validate_ds(ds):
-                print("Error: Dataset contains invalid types/values.")
+                print("ERROR: Dataset contains invalid types/values.")
                 return False
 
             # Make the request: Update/create a dataset.
-            res = self.session.put(f'{self.client}/datasets/{id}', data=json.dumps(ds))
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+            res = self.session.put(f'{self.client}/Datasets/{id}', data=json.dumps(ds), headers=headers, verify=False)
 
-            if res.status_code == 200: print("SUCCESS: Dataset uploaded/created successfully.")
+            if res.status_code == 200: print("SUCCESS: Dataset created successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameter.")
-            elif res.status_code == 404: print("ERROR: Dataset not found.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Dataset (id: '{id}') already exists.")
+            else: raise Exception("Unexpected response.")
             return res.ok
-
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to create a dataset.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to create a dataset. ({str(e)})")
         return False
 
     # GET | PUBLIC
     def get_dataset_dimensions(self, id: str) -> Union[list, bool]:
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id, must be a string.")
                 return False
             # Make the request: List dimensions available from a dataset.
-            res = self.session.get(f'{self.client}/datasets/{id}/dimensions')
+            res = self.session.get(f'{self.client}/Datasets/{id}/dimensions', verify=False)
             if res.status_code == 200:
                 # If the request is successful, return the dimensions in the form of an array.
                 print("SUCCESS: Dataset dimensions retrieved successfully.")
                 return res.json()
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Dataset not found.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Dataset (id: '{id}') not found, or has no dimensions.")
+            else: raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to get dimensions.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to get dimensions. ({str(e)})")
         return False
 
     # PUT | DATASET-ADMIN
-    def assign_dimensions_to_dataset(self, id: str, dims: list) -> bool:
+    def assign_dimensions_to_dataset(self, id: str, dims: Union[list, dict]) -> bool:
         """
         dims: Object representing the dimensions.
         """
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id, must be a string.")
                 return False
-            elif not isinstance(dims, list):
-                print("Error: Invalid dimensions.")
+            elif not isinstance(dims, (list, dict)):
+                print("ERROR: Invalid dimensions.")
                 return False
+
             # Make request: Assign dimensions to this dataset.
-            res = self.session.put(f'{self.client}/datasets/{id}/dimensions', data=json.dumps(dims))
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+            res = self.session.put(f'{self.client}/Datasets/{id}/dimensions',
+                                   data=json.dumps(dims), headers=headers, verify=False)
             if res.status_code == 200: print("SUCCESS: Dimensions assigned successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Dataset not found.")
-            else: raise
+            elif res.status_code == 403: print("ERROR: Forbidden request.")
+            elif res.status_code == 404: print(f"ERROR: Dataset (id: '{id}') not found.")
+            elif res.status_code == 409: print("ERROR: Conflicting dimensions.")
+            elif res.status_code == 500: print("ERROR: Request unsuccessful due to a server-side error.")
+            else: raise Exception(f"Unexpected response, status code = {str(res.status_code)}.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to assign dimensions.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to assign dimensions ({str(e)})")
         return False
 
     # POST | DATASET-ADMIN
@@ -146,19 +177,24 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id, must be a string.")
                 return False
-            elif not isinstance(obs, list):
-                print("Error: Invalid observations.")
+            elif not isinstance(obs, (list, dict)):
+                print(f"ERROR: Invalid observations.")
                 return False
             # Make request: Append observation values into this dataset.
-            res = self.session.post(f'{self.client}/datasets/{id}/observations', data=json.dumps(obs))
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+            res = self.session.post(f'{self.client}/Datasets/{id}/values',
+                                    data=json.dumps(obs), headers=headers, verify=False)
             if res.status_code == 200: print("SUCCESS: Observations appended successfully.")
-            elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Dataset not found.")
-            else: raise
+            elif res.status_code == 400: print("ERROR: Bad input parameters.\n", res.json())
+            elif res.status_code == 404: print(f"ERROR: Dataset (id: '{id}') not found.")
+            else:
+                print(res.json())
+                raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to append observations.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to append observations. ({str(e)})")
         return False
 
     # PUT | DATASET-ADMIN
@@ -168,35 +204,43 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(id, str):
-                print("Error: Invalid id.")
+                print("ERROR: Invalid id, must be a string.")
                 return False
-            elif not isinstance(obs_arr, list):
-                print("Error: Invalid observations array.")
+            elif not isinstance(obs_arr, (list, dict)):
+                print("ERROR: Invalid observations array.")
                 return False
             # Make request: Create or update all observation values.
-            res = self.session.put(f'{self.client}/datasets/{id}/observations', data=json.dumps(obs_arr))
+            headers={'Content-type': 'application/json', 'Accept': 'application/json'}
+            res = self.session.put(f'{self.client}/Datasets/{id}/values',
+                                   data=json.dumps(obs_arr), headers=headers, verify=False)
             if res.status_code == 200: print("SUCCESS: Observations replaced successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Dataset not found.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Dataset (id: '{id}') not found.")
+            else: raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to overwrite observations.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to overwrite observations. "
+                  f"({str(e)})")
         return False
+
+    # Variables
 
     # GET | PUBLIC
     def variable_exists(self, name: str) -> bool:
         try:
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name, must be a string.")
                 return False
             # Make request: Lists a specific variable.
-            res = self.session.get(f'{self.client}/variables/{name}')
-            if res.status_code == 200: print("SUCCESS: Queried variable does exist.")
+            res = self.session.get(f'{self.client}/Variables/{name}', verify=False)
+            if res.status_code == 200: print(f"Queried variable (name: '{name}') does exist.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Variable not found.")
-            else: raise
+            elif res.status_code == 404: print(f"Variable (name: '{name}') not found.")
+            else: raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to overwrite observations.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to clarify a variable's existence. "
+                  f"({str(e)})")
         return False
 
     # PUT | VARIABLE-ADMIN
@@ -207,37 +251,40 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name, must be a string.")
                 return False
             elif not isinstance(var, dict):
-                print("Error: Invalid variable object.")
+                print("ERROR: Invalid variable object.")
                 return False
+
             # Make request: Update/create a variable
-            res = self.session.put(f'{self.client}/variables/{name}', json.dumps(var))
-            if res.status_code == 200: print("SUCCESS: Variable created successfully.\n", res)
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+            res = self.session.put(f'{self.client}/Variables/{name}', json.dumps(var), headers=headers, verify=False)
+            if res.status_code == 200: print(f"SUCCESS: Variable (name: '{name}') created successfully.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Variable not found.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Variable (name: '{name}') not found.")
+            else: raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to create a variable.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to create a variable. ({str(e)})")
         return False
 
     # GET | PUBLIC
     def get_variable_categories(self, name: str) -> Union[list, bool]:
         try:
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name, must be a string.")
                 return False
             # Make request: Lists the categories in a specific variable.
-            res = self.session.get(f'{self.client}/variables/{name}/categories')
-            if res.status_code == 200:
-                print("SUCCESS: Queried variable categories retrieved.")
-                return res.json()
+            res = self.session.get(f'{self.client}/Variables/{name}/categories')
+            if res.status_code == 200: print(f"SUCCESS: Queried variable categories retrieved for variable '{name}'.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Variable not found.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Variable (name: '{name}') not found.")
+            else: raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to get variable categories.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to get variable categories. "
+                  f"({str(e)})")
         return False
 
     # PUT | VARIABLE-ADMIN
@@ -247,51 +294,56 @@ class NomisApiConnector:
         """
         try:
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name, must be a string.")
                 return False
             elif not isinstance(cat_arr, list):
-                print("Error: Invalid category array.")
+                print("ERROR: Invalid category array.")
                 return False
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name.")
                 return False
             # Make request: Add categories to variable.
-            res = self.session.put(f'{self.client}/variables/{name}/categories', data=json.dumps(cat_arr))
-            if res.status_code == 200: print("SUCCESS: Variable category created successfully.")
+            headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+            res = self.session.put(f'{self.client}/Variables/{name}/categories',
+                                   data=json.dumps(cat_arr), headers=headers, verify=False)
+            if res.status_code == 200: print(f"SUCCESS: Variable categories created successfully for variable '{name}'.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Variable not found.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Variable (name: '{name}') not found.")
+            else: raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to create variable category.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to create variable category. "
+                  f"({str(e)})")
         return False
 
     # POST | VARIABLE-ADMIN
-    def update_variable_category(self, name: str, code: str, cat: list) -> bool:
+    def update_variable_category(self, name: str, code: str, cat: dict) -> bool:
         """
         cat: Partial object representing a variable category.
         """
         try:
             if not isinstance(name, str):
-                print("Error: Invalid name.")
+                print("ERROR: Invalid name, must be a string.")
                 return False
             elif not isinstance(code, str):
-                # try: code = str(code)
-                # except:
-                print("Error: Code invalid type.")
+                print("ERROR: Code invalid type.")
                 return False
             elif not isinstance(cat, dict):
-                print("Error: Invalid category array.")
+                print("ERROR: Invalid category array.")
                 return False
             # Make request: Partially update category.
-            res = self.session.patch(f'{self.client}/variables/{name}/categories/{code}', data=json.dumps(cat))
-            if res.status_code == 200: print("SUCCESS: Variable category updated successfully.")
+            res = self.session.patch(f'{self.client}/Variables/{name}/categories/{code}', data=json.dumps(cat))
+            if res.status_code == 200: print(f"SUCCESS: Variable category updated successfully for variable '{name}'.")
             elif res.status_code == 400: print("ERROR: Bad input parameters.")
-            elif res.status_code == 404: print("ERROR: Variable not found.")
-            else: raise
+            elif res.status_code == 404: print(f"ERROR: Variable (name: '{name}') not found.")
+            else:
+                print(res.json())
+                raise Exception("Unexpected response.")
             return res.ok
-        except: print("ERROR: Unexpected response or invalid request whilst attempting to update a variable category.")
+        except Exception as e:
+            print(f"ERROR: Unexpected response or invalid request whilst attempting to update a variable category. "
+                  f"({str(e)})")
         return False
 
-# connector = NomisApiConnector("https://virtserver.swaggerhub.com/SpencerHedger/Nomis-API/2.01", ('user', 'pass'))
 
 

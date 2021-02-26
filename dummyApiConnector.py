@@ -62,7 +62,7 @@ class DummyApiConnector:
                 return False
 
             # Make the request: Get dataset definition.
-            res = self.session.get(f'{self.client}/datasets/{id}')
+            res = self.session.get(f'{self.client}:5001/Datasets/{id}')
 
             print('{}\n{}\n{}\nBody: {}'.format(
                 '-----------DATASET_EXISTS-----------',
