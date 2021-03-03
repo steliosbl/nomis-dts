@@ -19,7 +19,8 @@ class DatasetObservations:
                     "dataset": self.dataset_id,
                     "dimensions": self.dimensions,
                     "codes": self.codes,
-                    "values": self.table["value"]
+                    "values": self.table["value"],
+                    "statuses": None
                 }
             )
             

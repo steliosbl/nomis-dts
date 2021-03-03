@@ -8,12 +8,17 @@ from cantabular_connector import CantabularConnector
 from nomisApiConnector import NomisApiConnector
 from configManager import ConfigManager
 from args_manager import ArgsManager
+from read_from_file import ReadFromFile
 import json
 
-def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, dataset_title, query_variables, query_dataset, y_flag):
+def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, dataset_title, query_variables, query_dataset, y_flag, filename):
 	#Query cantabular using given variables
-	cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
-	table = cantabular_connector.query(query_dataset, query_variables)
+	if filename is not None:
+		read_from_file = ReadFromFile("query_file_example.json")
+		table = read_from_file.read()
+	else:
+		cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
+		table = cantabular_connector.query(query_dataset, query_variables)
 
 	#Create instance of nomis connector
 	nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
@@ -75,17 +80,21 @@ def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, datase
 		observations = DatasetObservations(table, dataset_id)
 		observations_requests = observations.observations_request()
 
-		nomis_connector.append_dataset_observations(dataset_id, observations_requests)
+		nomis_connector.overwrite_dataset_observations(dataset_id, observations_requests)
 
 		print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been CREATED successfully.")
 
 	else:
 		raise Exception("A dataset with this ID already exists.")
 
-def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, query_variables, query_dataset, y_flag):
+def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, query_variables, query_dataset, y_flag, filename):
 	#Query cantabular using given variables
-	cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
-	table = cantabular_connector.query(query_dataset, query_variables)
+	if filename is not None:
+		read_from_file = ReadFromFile("query_file_example.json")
+		table = read_from_file.read()
+	else:
+		cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
+		table = cantabular_connector.query(query_dataset, query_variables)
 
 	#Create instance of nomis connector
 	nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
@@ -154,10 +163,8 @@ def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dat
 		
 		#Append observations into dataset
 		print("\n-----OVERWRITING OBSERVATIONS-----")
-		print(table)
 		observations = DatasetObservations(table, dataset_id)
 		observations_request = observations.observations_request()
-		print(json.dumps(observations_request, indent=2))
 
 		nomis_connector.overwrite_dataset_observations(dataset_id, observations_request)
 
@@ -231,7 +238,7 @@ if nomis_connector.dataset_exists(args.dataset_id) == True:
 		is_update = str(input("--- A DATASET WITH THE ID " + args.dataset_id + " ALREADY EXISTS ---\n*** DO YOU WANT TO OVERWRITE/UPDATE y/n ***\n"))
 
 	if is_update == "y":
-		update_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id, args.query_variables, args.query_dataset, args.y_flag)
+		update_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id, args.query_variables, args.query_dataset, args.y_flag, args.filename)
 
 	elif is_update == "n":
 		print("*** DATASET HAS NOT BEEN UPDATED ***")
@@ -239,4 +246,4 @@ if nomis_connector.dataset_exists(args.dataset_id) == True:
 	else:
 		raise Exception( "'" + is_update + "' is not a valid option. Please try again!")
 else:
-	new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id, args.dataset_title, args.query_variables, args.query_dataset, args.y_flag)
+	new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id, args.dataset_title, args.query_variables, args.query_dataset, args.y_flag, args.filename)

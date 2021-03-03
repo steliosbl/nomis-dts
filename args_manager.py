@@ -11,6 +11,7 @@ class ArgsManager:
 		self.parser.add_argument('-d', '--query-dataset', action="store", help="the census dataset e.g. 'Usual-Residents'", type=str)
 		self.parser.add_argument('-y', '--suppress-prompts', action="store_true", help="suppresses all (y/n) prompts and automatically responds yes", default=False)
 		self.parser.add_argument('-v', '--verbose', action="store_true", help="verbose", default=False)
+		self.parser.add_argument('-f', '--filename', action="store", help="read data from a file instead of querying cantabular", type=str, default=None)
 
 		self.args = self.parser.parse_args()
 
@@ -20,3 +21,4 @@ class ArgsManager:
 		self.query_dataset = self.args.query_dataset
 		self.y_flag = self.args.suppress_prompts
 		self.v_flag = self.args.verbose
+		self.filename = self.args.filename
