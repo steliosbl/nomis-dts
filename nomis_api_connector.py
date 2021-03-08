@@ -40,7 +40,8 @@ class NomisApiConnector:
 
     # Datasets
 
-    def validate_ds(self, ds: NomisDataset) -> Union[bool, None]:
+    @staticmethod
+    def validate_ds(ds: NomisDataset) -> Union[bool, None]:
         """Method for validating that a dataset is in the correct format and contains the required information. Validation
         is done simply by first ensuring the dataset is the correct type (a Python dict), and then by checking the
         individual keys in the dataset, ensuring they are all in the correct type and format, and if they aren't
@@ -93,8 +94,8 @@ class NomisApiConnector:
         print(f"SUCCESS: Dataset with {ds['id']} validated.")
         return True
 
-    # Validate id
-    def validate_id(self, id: str) -> Union[bool, None]:
+    @staticmethod
+    def validate_id(id: str) -> Union[bool, None]:
         """Method for validating parameter IDs
 
         :param id: A string that is in a valid ID format.
@@ -362,7 +363,7 @@ class NomisApiConnector:
             raise Exception(f"Unexpected response with status code {res.status_code}.")
 
     # PUT | DATASET-ADMIN
-    def overwrite_dataset_observations(self, id: str, obs_arr: list) -> bool:
+    def overwrite_dataset_observations(self, id: str, obs_arr: Union[list, dict]) -> bool:
         """Method for overwriting the observations of a dataset in the Nomis database.
 
         :param id: A string that is in a valid id format.
