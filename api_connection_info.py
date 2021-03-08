@@ -1,21 +1,32 @@
 from ipaddress import ip_address
 from socket import gethostbyname
 from urllib.parse import urlparse
-from typing import Union, Tuple
+from type_hints import *
+
 
 class Credentials:
+    """sub-class of ApiConnectionInfo
+
+    :param username: A string of a valid username for accessing the associated API
+    :type username: str
+    :param password: A string of a valid password for accessing the associated API
+    :type password: str
+    :param key: A string of a valid key for accessing the associated API
+    :type key: str, optional
     """
-    sub-class of ApiConnectionInfo
-    """
-    def __init__(self, username: str, password: str, key: str) -> None:
+    def __init__(self, username: str, password: str, key: Union[str, None]) -> None:
         self.username = username
         self.password = password
         self.key = key
         self.is_valid = False
 
     def validate(self) -> bool:
-        """
-        All attributes are mandatory; to validate, ensure all are valid strings.
+        """Method for validating the Credentials class attributes. For this class, all attributes other than the key are
+        mandatory, and so need to be successfully validated (in this case, they must all be valid strings). Validation
+        will still be successful if no key is passed.
+
+        :return: A bool indicating whether the validation has been successful (True) or not (False)
+        :rtype: bool
         """
 
         self.is_valid = True
@@ -25,8 +36,8 @@ class Credentials:
                     and isinstance(self.username, str):
                 print("Username is valid.")
             else:
-                raise Exception
-        except:
+                raise TypeError
+        except TypeError:
             print("Username invalid, either none inputted or not a valid string.")
             self.is_valid = False
 
@@ -35,18 +46,19 @@ class Credentials:
                     and isinstance(self.password, str):
                 print("Password is valid.")
             else:
-                raise Exception
-        except:
+                raise TypeError
+        except TypeError:
             print("Password invalid, either none inputted or not a valid string.")
             self.is_valid = False
 
         try:
-            if self.key is not None \
-                    and isinstance(self.key, str):
+            if self.key is None:
+                print("No key inputted.")
+            elif isinstance(self.key, str):
                 print("Key is valid.")
             else:
-                raise Exception
-        except:
+                raise TypeError
+        except TypeError:
             print("Key invalid, either none inputted or not a valid string.")
             self.is_valid = False
 
@@ -54,8 +66,14 @@ class Credentials:
 
 
 class ConnectionInfo:
-    """
-    sub-class of ApiConnectionInfo
+    """sub-class of ApiConnectionInfo
+
+    :param api: A string of the API for which this class contains connection information
+    :type api: str
+    :param address: A string of a valid address, either a url or IP address, for connecting to the API
+    :type address: str
+    :param port: A string or an integer representing the port the API will be served on
+    :type port: str, int
     """
     def __init__(self, api: str, address: str, port: Union[str, int]) -> None:
         self.address = address
@@ -88,21 +106,26 @@ class ConnectionInfo:
                     self.ip_address = address
         try:
             self.port = str(port)
-        except:
+        except TypeError:
             self.port = "-1"
         self.api = api
         self.is_valid = False
         try:
             if self.api.lower() == "cantabular": self.default_port = "8491"
             elif self.api.lower() == "nomis":    self.default_port = "1234"   # Subject to change
-            else: raise Exception
-        except:
+            else: raise ValueError
+        except ValueError:
             print("Unknown API; no default port set.")
             self.default_port = "-1"
 
     def validate(self) -> bool:
-        """
-        All attributes are mandatory; has defaults for address and port
+        """ Method for validating the ConnectionInfo attributes. For this class, all attributes are mandatory, and so
+        need to be successfully validated. In this case, the api must be a valid string, the address must be a valid IP
+        address, or must be able to be successfully resolved into one (i.e., it can be a valid URL), and port must be a
+        valid numerical string, or an integer, and its numerical value must be within an acceptable range.
+
+        :return: A bool indicating whether the validation has been successful (True) or not (False)
+        :rtype: bool
         """
 
         self.is_valid = True
@@ -131,12 +154,34 @@ class ConnectionInfo:
 
 
 class ApiConnectionInfo(Credentials, ConnectionInfo):
+    """
+    :param username: A string of a valid username for accessing the associated API
+    :type username: str
+    :param password: A string of a valid password for accessing the associated API
+    :type password: str
+    :param key: A string of a valid key for accessing the associated API
+    :type key: str, optional
+    :param api: A string of the API for which this class contains connection information
+    :type api: str
+    :param address: A string of a valid address, either a url or IP address, for connecting to the API
+    :type address: str
+    :param port: A string or an integer representing the port the API will be served on
+    :type port: str, int
+    """
     def __init__(self, username, password, key, api, address, port):
         Credentials.__init__(self, username, password, key)
         ConnectionInfo.__init__(self, api, address, port)
 
     def get_credentials(self) -> Tuple[str, str]:
-        return (self.username, self.password)
+        """
+        :return: A tuple containing the username and password, respectively
+        :rtype: Tuple[str, str]
+        """
+        return self.username, self.password
 
     def get_client(self) -> str:
+        """
+        :return: A string representing a concatenation of the address and the report, separated by a colon
+        :rtype: str
+        """
         return str(f'{str(self.address)}:{str(self.port)}')

@@ -1,26 +1,41 @@
+from pyjstat import pyjstat
+from type_hints import *
+
+
 class VariableCategory:
-    def __init__(self, table):
+    """[Description]
+
+    :param table:
+    :type table: pyjstat.Dataset
+    """
+
+    def __init__(self, table: pyjstat.Dataset) -> None:
         self.table = table
         self.requests = []
 
-    def category_requests(self):
+    def category_requests(self) -> Union[List[Variables], None]:
+        """
+        :raises:
+        :return:
+        :rtype: list|None
+        """
         try:
-            for self.dimension in self.table["dimension"]:
-                for self.label in self.table["dimension"][self.dimension]["category"]["label"]:
+            for dimension in self.table["dimension"]:
+                for label in self.table["dimension"][dimension]["category"]["label"]:
                     self.requests.append(
                         {
-                        "code": self.label,
-                        "title": self.table["dimension"][self.dimension]["category"]["label"][self.label],
-                        "ancestors": None,
-                        "metadata": None,
-                        "typeId": None,
-                        "validity": {
-                            "select": True,
-                            "make": False
+                            "code": label,
+                            "title": self.table["dimension"][dimension]["category"]["label"][label],
+                            "ancestors": None,
+                            "metadata": None,
+                            "typeId": None,
+                            "validity": {
+                                "select": True,
+                                "make": False
                             }
                         }
                     )
 
-            return(self.requests)
+            return self.requests
         except:
             raise Exception("Error: Table Supplied is Null or Invalid")

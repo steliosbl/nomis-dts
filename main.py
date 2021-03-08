@@ -1,185 +1,189 @@
 """Script performs a JSON-stat query."""
 from variable import Variable
-from variable_category import VariableCategory 
+from variable_category import VariableCategory
 from dataset_observations import DatasetObservations
 from dataset_creation import DatasetCreation
 from assign_dimensions import AssignDimensions
 from cantabular_connector import CantabularConnector
-from nomisApiConnector import NomisApiConnector
-from configManager import ConfigManager
+from nomis_api_connector import NomisApiConnector
+from config_manager import ConfigManager
 from args_manager import ArgsManager
 from read_from_file import ReadFromFile
 import json
 
-def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, dataset_title, query_variables, query_dataset, y_flag, filename):
-	#Query cantabular using given variables
-	if filename is not None:
-		read_from_file = ReadFromFile("query_file_example.json")
-		table = read_from_file.read()
-	else:
-		cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
-		table = cantabular_connector.query(query_dataset, query_variables)
 
-	#Create instance of nomis connector
-	nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
+def new_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, dataset_title, query_variables,
+                query_dataset, y_flag, filename):
+    # Query cantabular using given variables
+    if filename is not None:
+        read_from_file = ReadFromFile("query_file_example.json")
+        table = read_from_file.read()
+    else:
+        cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
+        table = cantabular_connector.query(query_dataset, query_variables)
 
-	#Check to see if a dataset already exists with this id
-	dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
+    # Create instance of nomis connector
+    nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
 
-	if dataset_exists_code == False:
-		#Create a new dataset with given id
+    # Check to see if a dataset already exists with this id
+    dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
 
-		print("-----DATASET CREATION-----")
-		dataset_creation = DatasetCreation(dataset_id, dataset_title)
-		dataset_request_body = dataset_creation.dataset_request()
-		nomis_connector.create_dataset(dataset_id, dataset_request_body)
+    if dataset_exists_code == False:
+        # Create a new dataset with given id
 
-		#Create the variable creation request bodies
-		variable_creation = Variable(table)
-		variable_request_body = variable_creation.variable_requests()
+        print("-----DATASET CREATION-----")
+        dataset_creation = DatasetCreation(dataset_id, dataset_title)
+        dataset_request_body = dataset_creation.dataset_request()
+        nomis_connector.create_dataset(dataset_id, dataset_request_body)
 
-		#Create the category request bodies
-		category_creation = VariableCategory(table)
-		category_request_body = category_creation.category_requests()
+        # Create the variable creation request bodies
+        variable_creation = Variable(table)
+        variable_request_body = variable_creation.variable_requests()
 
-		#Check to see variables already exist for the given dimensions
-		print("\n-----VARIABLE CREATION-----")
-		for variable in query_variables:
+        # Create the category request bodies
+        category_creation = VariableCategory(table)
+        category_request_body = category_creation.category_requests()
 
-			variable_exists_code = nomis_connector.variable_exists(variable)
+        # Check to see variables already exist for the given dimensions
+        print("\n-----VARIABLE CREATION-----")
+        for variable in query_variables:
 
-			#IF the variable does NOT exist then create it
-			if variable_exists_code == False: #mock server always returns True so this is for testing purposes.
-				for request in variable_request_body:
-					if request["name"] == variable:
-						nomis_connector.create_variable(variable, request)
-					else:
-						continue
+            variable_exists_code = nomis_connector.variable_exists(variable)
 
-				#Create the categories for this new variable as well.
-				requests = []
-				for category in table["dimension"][variable]["category"]["index"]:
-					for request in category_request_body:
-						if category == request["code"] and table["dimension"][variable]["category"]["label"][category] == request["title"]:
-							requests.append(request)
-						else:
-							continue
-				nomis_connector.create_variable_category(variable, requests)
+            # IF the variable does NOT exist then create it
+            if variable_exists_code == False:  # mock server always returns True so this is for testing purposes.
+                for request in variable_request_body:
+                    if request["name"] == variable:
+                        nomis_connector.create_variable(variable, request)
+                    else:
+                        continue
 
-			else:
-				continue
-		print("\n-----ASSIGNING DIMENSIONS-----")
-		#Assign dimensions to dataset
-		assign_dimensions = AssignDimensions(table)
-		assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
+                # Create the categories for this new variable as well.
+                requests = []
+                for category in table["dimension"][variable]["category"]["index"]:
+                    for request in category_request_body:
+                        if category == request["code"] and table["dimension"][variable]["category"]["label"][
+                            category] == request["title"]:
+                            requests.append(request)
+                        else:
+                            continue
+                nomis_connector.create_variable_category(variable, requests)
 
-		nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
+            else:
+                continue
+        print("\n-----ASSIGNING DIMENSIONS-----")
+        # Assign dimensions to dataset
+        assign_dimensions = AssignDimensions(table)
+        assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
 
-		print("\n-----APPENDING OBSERVATIONS-----")
-		#Append observations into dataset
-		observations = DatasetObservations(table, dataset_id)
-		observations_requests = observations.observations_request()
+        nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
 
-		nomis_connector.overwrite_dataset_observations(dataset_id, observations_requests)
+        print("\n-----APPENDING OBSERVATIONS-----")
+        # Append observations into dataset
+        observations = DatasetObservations(table, dataset_id)
+        observations_requests = observations.observations_request()
 
-		print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been CREATED successfully.")
+        nomis_connector.overwrite_dataset_observations(dataset_id, observations_requests)
 
-	else:
-		raise Exception("A dataset with this ID already exists.")
+        print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been CREATED successfully.")
 
-def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, query_variables, query_dataset, y_flag, filename):
-	#Query cantabular using given variables
-	if filename is not None:
-		read_from_file = ReadFromFile("query_file_example.json")
-		table = read_from_file.read()
-	else:
-		cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
-		table = cantabular_connector.query(query_dataset, query_variables)
+    else:
+        raise Exception("A dataset with this ID already exists.")
 
-	#Create instance of nomis connector
-	nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
 
-	#Check to see if a dataset already exists with this id
-	dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
+def update_dataset(nomis_url, nomis_creds, cantabular_url, cantabular_creds, dataset_id, query_variables, query_dataset,
+                   y_flag, filename):
+    # Query cantabular using given variables
+    if filename is not None:
+        read_from_file = ReadFromFile("query_file_example.json")
+        table = read_from_file.read()
+    else:
+        cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
+        table = cantabular_connector.query(query_dataset, query_variables)
 
-	if dataset_exists_code == True:
+    # Create instance of nomis connector
+    nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
 
-		print("\n-----RETRIEVING DIMENSIONS-----")
-		assigned_variables_json = nomis_connector.get_dataset_dimensions(dataset_id)
-		assigned_variables = []
-		non_assigned_variables = []
+    # Check to see if a dataset already exists with this id
+    dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
 
-		#Get all of the currently assigned variables in a list by variable name
-		for variable in assigned_variables:
-			assigned_variables.append(variable["variable"]["name"])
-			
-		#Check to see if any of the variables in the observation request 
-		for variable in query_variables:
-			if variable not in assigned_variables:
-				non_assigned_variables.append(variable)
+    if dataset_exists_code == True:
 
-		#Create any new variables and assign all non assigned variables to the dataset
-		if len(non_assigned_variables) > 0:
+        print("\n-----RETRIEVING DIMENSIONS-----")
+        assigned_variables_json = nomis_connector.get_dataset_dimensions(dataset_id)
+        assigned_variables = []
+        non_assigned_variables = []
 
-			#Create the variable creation request bodies
-			variable_creation = Variable(table)
-			variable_request_body = variable_creation.variable_requests()
+        # Get all of the currently assigned variables in a list by variable name
+        for variable in assigned_variables:
+            assigned_variables.append(variable["variable"]["name"])
 
-			#Create the category request bodies
-			category_creation = VariableCategory(table)
-			category_request_body = category_creation.category_requests()
+        # Check to see if any of the variables in the observation request
+        for variable in query_variables:
+            if variable not in assigned_variables:
+                non_assigned_variables.append(variable)
 
-			#Check to see variables already exist for the given dimensions
-			print("\n-----VARIABLE CREATION-----")
-			for variable in query_variables:
-				variable_exists_code = nomis_connector.variable_exists(variable)
+        # Create any new variables and assign all non assigned variables to the dataset
+        if len(non_assigned_variables) > 0:
 
-				#IF the variable does NOT exist then create it
-				if variable_exists_code == False: #mock server always returns True so this is for testing purposes.
-					for request in variable_request_body:
-						if request["name"] == variable:
-							nomis_connector.create_variable(variable, request)
-						else:
-							continue
-					
-					#Create the categories for this new variable as well.
-					requests = []
-					for category in table["dimension"][variable]["category"]["index"]:
-						for request in category_request_body:
-							if category == request["code"] and table["dimension"][variable]["category"]["label"][category] == request["title"]:
-								requests.append(request)
-							else:
-								continue
-					nomis_connector.create_variable_category(variable, requests)
-				else:
-					continue
+            # Create the variable creation request bodies
+            variable_creation = Variable(table)
+            variable_request_body = variable_creation.variable_requests()
 
-			#Assign dimensions to dataset
-			print("\n-----OVERWRITING DIMENSIONS-----")
-			assign_dimensions = AssignDimensions(table)
-			assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
+            # Create the category request bodies
+            category_creation = VariableCategory(table)
+            category_request_body = category_creation.category_requests()
 
-			nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
-		
-		#Append observations into dataset
-		print("\n-----OVERWRITING OBSERVATIONS-----")
-		observations = DatasetObservations(table, dataset_id)
-		observations_request = observations.observations_request()
+            # Check to see variables already exist for the given dimensions
+            print("\n-----VARIABLE CREATION-----")
+            for variable in query_variables:
+                variable_exists_code = nomis_connector.variable_exists(variable)
 
-		nomis_connector.overwrite_dataset_observations(dataset_id, observations_request)
+                # IF the variable does NOT exist then create it
+                if variable_exists_code == False:  # mock server always returns True so this is for testing purposes.
+                    for request in variable_request_body:
+                        if request["name"] == variable:
+                            nomis_connector.create_variable(variable, request)
+                        else:
+                            continue
 
-		print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been UPDATED successfully.")
+                    # Create the categories for this new variable as well.
+                    requests = []
+                    for category in table["dimension"][variable]["category"]["index"]:
+                        for request in category_request_body:
+                            if category == request["code"] and table["dimension"][variable]["category"]["label"][
+                                category] == request["title"]:
+                                requests.append(request)
+                            else:
+                                continue
+                    nomis_connector.create_variable_category(variable, requests)
+                else:
+                    continue
 
-	else:
-		raise Exception("A dataset with this ID does NOT exist.")
+            # Assign dimensions to dataset
+            print("\n-----OVERWRITING DIMENSIONS-----")
+            assign_dimensions = AssignDimensions(table)
+            assign_dimensions_requests = assign_dimensions.assign_dimensions_requests()
 
+            nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
+
+        # Append observations into dataset
+        print("\n-----OVERWRITING OBSERVATIONS-----")
+        observations = DatasetObservations(table, dataset_id)
+        observations_request = observations.observations_request()
+
+        nomis_connector.overwrite_dataset_observations(dataset_id, observations_request)
+
+        print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been UPDATED successfully.")
+
+    else:
+        raise Exception("A dataset with this ID does NOT exist.")
 
 
 ##############################
 
 
 args = ArgsManager()
-
 
 ##############################
 c = ConfigManager()
@@ -234,16 +238,19 @@ is_update = "y"
 
 if nomis_connector.dataset_exists(args.dataset_id) == True:
 
-	if args.y_flag == False:
-		is_update = str(input("--- A DATASET WITH THE ID " + args.dataset_id + " ALREADY EXISTS ---\n*** DO YOU WANT TO OVERWRITE/UPDATE y/n ***\n"))
+    if args.y_flag == False:
+        is_update = str(input(
+            "--- A DATASET WITH THE ID " + args.dataset_id + " ALREADY EXISTS ---\n*** DO YOU WANT TO OVERWRITE/UPDATE y/n ***\n"))
 
-	if is_update == "y":
-		update_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id, args.query_variables, args.query_dataset, args.y_flag, args.filename)
+    if is_update == "y":
+        update_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id,
+                       args.query_variables, args.query_dataset, args.y_flag, args.filename)
 
-	elif is_update == "n":
-		print("*** DATASET HAS NOT BEEN UPDATED ***")
+    elif is_update == "n":
+        print("*** DATASET HAS NOT BEEN UPDATED ***")
 
-	else:
-		raise Exception( "'" + is_update + "' is not a valid option. Please try again!")
+    else:
+        raise Exception("'" + is_update + "' is not a valid option. Please try again!")
 else:
-	new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id, args.dataset_title, args.query_variables, args.query_dataset, args.y_flag, args.filename)
+    new_dataset(nomis_addr, nomis_creds, cantabular_addr, cantabular_creds, args.dataset_id, args.dataset_title,
+                args.query_variables, args.query_dataset, args.y_flag, args.filename)

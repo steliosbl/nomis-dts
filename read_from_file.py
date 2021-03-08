@@ -1,29 +1,37 @@
 import json
 from pyjstat import pyjstat
 
+
 class ReadFromFile:
-	def __init__(self, filename):
-		self.filename = filename
+    """[Description]
 
-	def read(self):
+    :param filename:
+    :type filename: str
+    """
+    def __init__(self, filename: str) -> None:
+        self.filename = filename
 
-		with open(self.filename) as json_file:
-			self.data = json.load(json_file)
-			self.data = json.dumps(self.data)
+    def read(self) -> pyjstat.Dataset:
+        """[Description]
+        :return:
+        :rtype:
+        """
+        with open(self.filename) as json_file:
+            data = json.load(json_file)
+            data = json.dumps(data)
 
-		self.table = pyjstat.Dataset.read(self.data)
+        table = pyjstat.Dataset.read(data)
 
-		# Report any categories in the rule variable that were blocked by disclosure
-		# control rules.
-		self.blocked_categories = self.table['extension']['cantabular']['blocked']
-		if self.blocked_categories:
-		    self.RULE_VAR_NAME, self.RULE_VAR = list(self.blocked_categories.items())[0]
-		    print(f'The following categories of {self.RULE_VAR_NAME} failed disclosure control checks:')
-		    print(', '.join(self.RULE_VAR['category']['label'].values()))
-		    print('')
+        # Report any categories in the rule variable that were blocked by disclosure
+        # control rules.
+        blocked_categories = table['extension']['cantabular']['blocked']
+        if blocked_categories:
+            RULE_VAR_NAME, RULE_VAR = list(blocked_categories.items())[0]
+            print(f'The following categories of {RULE_VAR_NAME} failed disclosure control checks:')
+            print(', '.join(RULE_VAR['category']['label'].values()))
+            print('')
 
-		return(self.table)
-
+        return table
 
 # EXAMPLE
 

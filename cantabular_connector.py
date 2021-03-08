@@ -1,43 +1,63 @@
 import requests
 from requests.auth import HTTPBasicAuth
 from pyjstat import pyjstat
+from type_hints import *
+
 
 class CantabularConnector:
-	def __init__(self, url, creds):
-		self.url = url
-		self.creds = creds
+    """Class for communicating directly with the Cantabular API, in order to retrieve a jsonstat dataset based on
+    specific queries.
 
-		if len(self.creds) != 2:
-		    raise Exception('Invalid credentials file')
+    :param url: Valid url for connection to the Cantabular API
+    :type url: str
+    :param creds: Tuple containing a username and password for authenticating the Cantabular API
+    :type creds: tuple
+    """
+    def __init__(self, url: str, creds: Tuple[str, str]) -> None:
+        self.url = url
+        self.creds = creds
 
-	def query(self, dataset, variables):
-		self.dataset = dataset
-		self.variables = variables
+        if len(self.creds) != 2:
+            raise Exception('Invalid credentials file')
 
-		# Perform a query to query-json-stat endpoint using supplied BASE_URL,
-		# DATASET and VARIABLES. The server is secured using HTTP Basic Authentication.
-		self.QUERY = self.url + '/v8/query-json-stat/%s?%s' % (
-		    self.dataset, '&'.join([f'v={v}' for v in self.variables]))
+    def query(self, dataset: str, variables: list) -> pyjstat.Dataset:
+        """Method for making a query to the Cantabular API using the argument variables.
 
-		self.response = requests.get(self.QUERY, auth=HTTPBasicAuth(self.creds[0], self.creds[1]))
+        :param dataset: Name/ID of a dataset
+        :type dataset: str
 
-		# Check for an errored response. This may occur due to network issues, if the query
-		# contained invalid values, or if the entire ouput table was blocked for disclosure
-		# control reasons.
-		if not self.response:
-		    raise Exception(f'HTTP error: {self.response.content}')
+        :param variables: A list containing valid variables.
+        :type variables: list
 
-		# Load response into a pystat dataframe.
-		self.table = pyjstat.Dataset.read(self.response.content.decode('utf-8'))
+        :raises requests.HTTPError: Raised in the case of a network partition or invalid query to the Cantabular API.
 
-		# Report any categories in the rule variable that were blocked by disclosure
-		# control rules.
-		self.blocked_categories = self.table['extension']['cantabular']['blocked']
-		if self.blocked_categories:
-		    self.RULE_VAR_NAME, self.RULE_VAR = list(self.blocked_categories.items())[0]
-		    print(f'The following categories of {self.RULE_VAR_NAME} failed disclosure control checks:')
-		    print(', '.join(self.RULE_VAR['category']['label'].values()))
-		    print('')
+        :return: A cantabular table in the form of a jsonstat dataframe.
+        :rtype: pyjstat.Dataset
+        """
 
+        # Perform a query to query-json-stat endpoint using supplied BASE_URL,
+        # DATASET and VARIABLES. The server is secured using HTTP Basic Authentication.
+        QUERY = self.url + '/v8/query-json-stat/%s?%s' % (
+            dataset, '&'.join([f'v={v}' for v in variables]))
 
-		return(self.table)
+        response = requests.get(QUERY, auth=HTTPBasicAuth(self.creds[0], self.creds[1]))
+
+        # Check for an errored response. This may occur due to network issues, if the query
+        # contained invalid values, or if the entire ouput table was blocked for disclosure
+        # control reasons.
+        if not response:
+            raise requests.HTTPError(f'HTTP error: {response.content}')
+
+        # Load response into a pystat dataframe.
+        table = pyjstat.Dataset.read(response.content.decode('utf-8'))
+
+        # Report any categories in the rule variable that were blocked by disclosure
+        # control rules.
+        self.blocked_categories = table['extension']['cantabular']['blocked']
+        if self.blocked_categories:
+            RULE_VAR_NAME, RULE_VAR = list(self.blocked_categories.items())[0]
+            print(f'The following categories of {RULE_VAR_NAME} failed disclosure control checks:')
+            print(', '.join(RULE_VAR['category']['label'].values()))
+            print('')
+
+        return table

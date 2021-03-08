@@ -1,8 +1,17 @@
-from configConstants import VALID_FORMATS, MAX_SIZE
+from config_constants import VALID_FORMATS, MAX_SIZE
 
 
 class Configuration:
+    """Class containing configuration information
+
+    :param input_format:
+    :param output_format:
+    :param data_type:
+    :param dataset_size:
+    """
+
     def __init__(self, input_format: str, output_format: str, data_type: str, dataset_size: int) -> None:
+
         self.input_format = input_format
         self.output_format = output_format
         self.data_type = data_type          # i.e. data or metadata
@@ -10,9 +19,11 @@ class Configuration:
         self.is_valid = False
 
     def validate(self) -> bool:
-        """
+        """Method to validate the configuration attributes
         Mandatory: input_format, output_format - To validate, check if they are in the list of acceptable formats
         Optional: data_type, size - To validate, check if data type is either data or metadata, and size is within limit
+
+        :return bool:
         """
 
         self.is_valid = True

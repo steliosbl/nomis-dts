@@ -29,5 +29,5 @@ DEFAULT_CONFIG_FILE = '''
   }
 }
 '''
-VALID_FORMATS = ["json", "csv"]  # Will be a list of acceptable input/output data formats for validation purposes
+VALID_FORMATS = ["json", "csv", "json-stat"]   # A list of acceptable input/output data formats for validation purposes
 MAX_SIZE = 1000000  # arbitrary for now, might be pointless
