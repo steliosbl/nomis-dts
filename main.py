@@ -6,6 +6,7 @@ from api_connection_info import ApiConnectionInfo
 from args_manager import ArgsManager
 from read_from_file import ReadFromFile
 from dataset_transformations import DatasetTransformations
+from logger import Logger
 import json
 
 
@@ -103,7 +104,7 @@ def update_dataset(nomis_info: ApiConnectionInfo,
 
     # Query cantabular using given variables
     if filename is not None:
-        read_from_file = ReadFromFile("query_file_example.json")
+        read_from_file = ReadFromFile("cantabular_query_example.json")
         table = read_from_file.read()
     else:
         cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
@@ -170,6 +171,7 @@ def update_dataset(nomis_info: ApiConnectionInfo,
 
             # Assign dimensions to dataset
             print("\n-----OVERWRITING DIMENSIONS-----")
+            nomis_connector.delete_dimensions(dataset_id)
             assign_dimensions_requests = ds_transformations.assign_dimensions()
             nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
 
@@ -188,6 +190,8 @@ def update_dataset(nomis_info: ApiConnectionInfo,
 
 
 args = ArgsManager()
+logs = Logger(verbose=args.v_flag)
+
 
 ##############################
 c = ConfigManager()
@@ -231,7 +235,7 @@ print(nom.port + "\n")
 ########## EXAMPLES ##########
 
 nomis_creds = (nom.username, nom.password)
-nomis_addr = nom.address
+nomis_addr = nom.get_client()
 
 cantabular_addr = cant.address
 cantabular_creds = (cant.username, cant.password)

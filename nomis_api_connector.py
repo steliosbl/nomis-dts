@@ -27,7 +27,7 @@ class NomisApiConnector:
     :param port: A string or an integer representing the port the API will be served on
     :type port: str|int, optional
     """
-    def __init__(self, address: str, credentials: Tuple[str, str], port: Union[str, int, None] = "5001") -> None:
+    def __init__(self, address: str, credentials: Tuple[str, str], port: Union[str, int, None] = None) -> None:
         self.client = f"{str(address)}:{str(port)}" if port is not None else str(address)
         self.session = requests.Session()   # Begin a session
         self.session.auth = credentials
@@ -214,11 +214,10 @@ class NomisApiConnector:
         # Type/value checking
         self.validate_ds(ds)
         self.validate_id(id)
-        try:
-            if not ds["id"] == id:
-                raise ValueError
-        except ValueError:
+        if not ds["id"] == id:
             raise ValueError("Dataset ID does not match parameter ID.")
+
+        print(json.dumps(ds))
 
         # Make the request: Update/create a dataset.
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -234,6 +233,7 @@ class NomisApiConnector:
         elif res.status_code == 400:
             raise requests.HTTPError("ERROR: Bad input parameter.")
         elif res.status_code == 404:
+            print(res.text)
             raise requests.HTTPError(f"ERROR: Dataset (id: '{id}') already exists.")
         else:
             raise Exception(f"Unexpected response with status code {res.status_code}.")
@@ -275,6 +275,47 @@ class NomisApiConnector:
         else:
             raise Exception(f"Unexpected response with status code {res.status_code}.")
 
+    def delete_dimensions(self, id: str) -> Union[bool, None]:
+        """Method for deleting dimensions from a dataset that exists in the Nomis database.
+
+                :param id: A string that is in a valid id format.
+                :type id: str
+
+                :raises TypeError: A TypeError will be raised if the validate_id() method detects that the id is not a string.
+                :raises ValueError: A ValueError will be raised if the validate_id() method detects that the inputted id is not in the correct UUID format.
+                :raises requests.HTTPError: A HTTPError will be raised if either connecting to the API is unsuccessful or a negative response is received.
+
+                :return: True if dimensions are assigned successfully, otherwise an exception is raised.
+                :rtype: bool|None
+                """
+        # Type/value checking
+        self.validate_id(id)
+
+        # Make request: Delete dimensions from this dataset.
+        try:
+            res = self.session.delete(f'{self.client}/Datasets/{id}/dimensions', verify=False)
+        except Exception as e:
+            raise requests.ConnectionError(f"ERROR: Unable to connect to client. ({e})")
+
+        # Handle response
+        if res.status_code == 204:
+            print("SUCCESS: Dimensions deleted successfully.")
+            return True
+        elif res.status_code == 400:
+            raise requests.HTTPError("ERROR: Bad request.")
+        elif res.status_code == 403:
+            raise requests.HTTPError("ERROR: Forbidden request.")
+        elif res.status_code == 404:
+            raise requests.HTTPError(f"ERROR: Dataset (id: '{id}') not found.")
+        elif res.status_code == 409:
+            raise requests.HTTPError("ERROR: Conflicting dimensions.")
+        elif res.status_code == 500:
+            return True
+            # raise requests.HTTPError("ERROR: Request unsuccessful due to a server-side error.")
+        else:
+            raise Exception(f"Unexpected response with status code {res.status_code}.")
+
+
     # PUT | DATASET-ADMIN
     def assign_dimensions_to_dataset(self, id: str, dims: Union[list, dict]) -> Union[bool, None]:
         """Method for assigning dimensions to a dataset which exists in the Nomis database.
@@ -304,6 +345,7 @@ class NomisApiConnector:
         except Exception as e:
             raise requests.ConnectionError(f"ERROR: Unable to connect to client. ({e})")
 
+        # Handle response
         if res.status_code == 200:
             print("SUCCESS: Dimensions assigned successfully.")
             return True
@@ -316,6 +358,7 @@ class NomisApiConnector:
         elif res.status_code == 409:
             raise requests.HTTPError("ERROR: Conflicting dimensions.")
         elif res.status_code == 500:
+            # print(res.text)
             raise requests.HTTPError("ERROR: Request unsuccessful due to a server-side error.")
         else:
             raise Exception(f"Unexpected response with status code {res.status_code}.")
@@ -349,7 +392,6 @@ class NomisApiConnector:
                                     data=json.dumps(obs), headers=headers, verify=False)
         except Exception as e:
             raise requests.ConnectionError(f"ERROR: Unable to connect to client. ({e})")
-        print(res.status_code)
 
         # Handle response
         if res.status_code == 200:

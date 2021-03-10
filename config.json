@@ -1,7 +1,7 @@
 {
   "Cantabular Credentials": {
     "username": "durham.project",
-    "password": " extra.carrot.slowly",
+    "password": "extra.carrot.slowly",
     "key": 1234
   },
   "Cantabular Connection Information": {
@@ -16,8 +16,8 @@
   },
   "Nomis Connection Information": {
     "api": "nomis",
-    "address": "https://virtserver.swaggerhub.com/SpencerHedger/Nomis-API/2.01",
-    "port": "1234"
+    "address": "https://localhost",
+    "port": "5001"
   },
   "Dataset Information": {
     "input_format": null,
