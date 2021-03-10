@@ -190,7 +190,7 @@ def update_dataset(nomis_info: ApiConnectionInfo,
 
 
 args = ArgsManager()
-logs = Logger(verbose=args.v_flag)
+logs = Logger(verbose=args.v_flag, log_file=args.log_file)
 
 
 ##############################
