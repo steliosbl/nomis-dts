@@ -4,6 +4,8 @@ from uuid import UUID
 import requests
 import json
 
+requests.packages.urllib3.disable_warnings() 
+
 Metadata = Dict[str, Union[str, List[str]]]
 
 """
@@ -172,7 +174,7 @@ class NomisMetadataApiConnector:
             headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
 
             # Ensure the metadata is a correct dict instance
-            if not isinstance(metadata, dict):
+            if not isinstance(metadata, list):
                 print("ERROR: Metadata in invalid format.")
                 return False
             if "id" in metadata and metadata["id"] is not None:
@@ -192,17 +194,15 @@ class NomisMetadataApiConnector:
                                     data=json.dumps(metadata), headers=headers, verify=False)
 
             # Handle response
-            if res.status_code == 201:
-                new_metadata = json.loads(res.text)
-                print(f"SUCCESS: New metadata successfully added{belongs_to}.\n"
-                      f"New metadata UUID = {new_metadata['id']}")
-                return str(new_metadata['id'])
+            if res.status_code == 200:
+                print(f"SUCCESS: New metadata added successfully")
+                return True
             elif res.status_code == 400:
-                print(f"ERROR: Unable to add new metadata{belongs_to} due to validation errors.")
+                print(f"ERROR: Unable to add new metadata due to validation errors.")
                 print(res.json())
                 return False
             elif res.status_code == 409:
-                print(f"ERROR: Unable to add new metadata{belongs_to} due to conflict.")
+                print(f"ERROR: Unable to add new metadata due to conflict.")
                 print(res.json())
                 return False
             else:
