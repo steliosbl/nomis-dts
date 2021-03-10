@@ -27,7 +27,7 @@ class NomisApiConnector:
     :param port: A string or an integer representing the port the API will be served on
     :type port: str|int, optional
     """
-    def __init__(self, address: str, credentials: Tuple[str, str], port: Union[str, int, None] = None) -> None:
+    def __init__(self, address: str, credentials: Tuple[str, str], port: Union[str, int, None] = "5001") -> None:
         self.client = f"{str(address)}:{str(port)}" if port is not None else str(address)
         self.session = requests.Session()   # Begin a session
         self.session.auth = credentials
@@ -447,6 +447,42 @@ class NomisApiConnector:
             raise Exception(f"Unexpected response with status code {res.status_code}.")
 
     # Variables
+
+    # GET | PUBLIC
+    def get_variable(self, name: str) -> Union[bool, None]:
+        """Method for checking the existence of a variable by name.
+
+        :param name: Unique name of the variable.
+        :type name: str
+
+        :raises TypeError: A TypeError will be raised if the name param is not a string.
+        :raises ValueError: A ValueError will be raised if the name param is not in a valid format.
+        :raises requests.HTTPError: A HTTPError will be raised if either connecting to the API is unsuccessful or a negative response is received.
+
+        :return: Unless an exception is raised, True is returned if the variable does exist, False otherwise.
+        :rtype: bool|None
+        """
+        # Validation
+        if not isinstance(name, str):
+            raise TypeError("ERROR: Invalid name, must be a string.")
+
+        # Make request: Lists a specific variable.
+        try:
+            res = self.session.get(f'{self.client}/Variables/{name}', verify=False)
+        except Exception as e:
+            raise requests.ConnectionError(f"ERROR: Unable to connect to client. ({e})")
+
+        # Handle response
+        if res.status_code == 200:
+            print(f"Queried variable (name: '{name}') does exist.")
+            return res.text
+        elif res.status_code == 400:
+            raise requests.HTTPError("ERROR: Bad input parameters.")
+        elif res.status_code == 404:
+            print(f"Queried variable (name: '{name}') does not exist.")
+            return False
+        else:
+            raise Exception(f"Unexpected response with status code {res.status_code}.")
 
     # GET | PUBLIC
     def variable_exists(self, name: str) -> Union[bool, None]:
