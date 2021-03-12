@@ -1,7 +1,7 @@
 import unittest
 from config_manager import ConfigManager
 from configuration import Configuration
-from api_connection_info import ConnectionInfo, Credentials, ApiConnectionInfo
+from configuration import ConnectionInfo, Credentials, ApiConnectionInfo
 import config_constants
 from collections import namedtuple
 

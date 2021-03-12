@@ -1,8 +1,9 @@
 import unittest.mock
 import uuid
-from metadata_connector import NomisMetadataApiConnector
+from nomis_metadata_api_connector import NomisMetadataApiConnector
 """
 To run:
+ - The metadata API must be running locally 
 
 Test all:
  - python test_metadata_connector.py -b
@@ -46,12 +47,14 @@ VALID_METADATA = {
   ]
 }
 
+# todo: add invalid cases
+
 
 class TestMetadataConnector(unittest.TestCase):
     def setUp(self) -> None:
         self.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         self.obj_id = VALID_METADATA["belongsTo"]
-        self.valid_connector = NomisMetadataApiConnector("https://localhost", ('a', 'b'), '5001')
+        self.valid_connector = NomisMetadataApiConnector(('a', 'b'), "https://localhost", '5001')
         self.uuid = self.valid_connector.add_new_metadata(VALID_METADATA)
 
     def tearDown(self) -> None:
@@ -72,14 +75,14 @@ class TestMetadataConnector(unittest.TestCase):
         # Test updating
         update_md = {"id": self.uuid, "belongsTo": self.obj_id, "description": "updated"}
         self.assertTrue(self.valid_connector.update_metadata_association(self.uuid, update_md))
-        retr_md = self.valid_connector.get_metadata_by_id(self.uuid)
-        self.assertEqual(retr_md["description"], "updated")
+        ret_md = self.valid_connector.get_metadata_by_id(self.uuid)
+        self.assertEqual(ret_md["description"], "updated")
 
         # Revert back (and test)
         update_md = {"id": self.uuid, "belongsTo": self.obj_id, "description": "test"}
         self.assertTrue(self.valid_connector.update_metadata_association(self.uuid, update_md))
-        retr_md = self.valid_connector.get_metadata_by_id(self.uuid)
-        self.assertEqual(retr_md["description"], "test")
+        ret_md = self.valid_connector.get_metadata_by_id(self.uuid)
+        self.assertEqual(ret_md["description"], "test")
 
 
 if __name__ == "__main__":

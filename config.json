@@ -2,10 +2,9 @@
   "Cantabular Credentials": {
     "username": "durham.project",
     "password": "extra.carrot.slowly",
-    "key": 1234
+    "key": null
   },
   "Cantabular Connection Information": {
-    "api": "cantabular",
     "address": "https://ftb-api-ext.ons.sensiblecode.io",
     "port": "8491"
   },
@@ -15,14 +14,16 @@
     "key": null
   },
   "Nomis Connection Information": {
-    "api": "nomis",
     "address": "https://localhost",
     "port": "5001"
   },
-  "Dataset Information": {
-    "input_format": null,
-    "output_format": "JSON",
-    "data_type": "Data",
-    "dataset_size": null
+  "Nomis Metadata Credentials": {
+    "username": "user",
+    "password": "pass",
+    "key": null
+  },
+  "Nomis Metadata Connection Information": {
+    "address": "https://localhost",
+    "port": "5001"
   }
 }

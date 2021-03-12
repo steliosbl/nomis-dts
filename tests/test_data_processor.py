@@ -3,7 +3,7 @@ import unittest
 import uuid
 from unittest.mock import patch
 from cantabular_client import Table, AuthenticationError
-from cantabular_connector import CantabularConnector
+from cantabular_api_connector import CantabularApiConnector
 from variable import Variable
 from variable_category import VariableCategory
 from assign_dimensions import AssignDimensions
@@ -26,9 +26,9 @@ INVALID_QUERY_VARIABLES = {'COUNTRY', 'HEALTH_T004A', 'SEX'}
 
 class TestCantabularConnector(unittest.TestCase):
     def setUp(self) -> None:
-        self.valid_connector = CantabularConnector(VALID_URL, VALID_CREDENTIALS)
-        self.connector_invalid_creds = CantabularConnector(VALID_URL, INVALID_CREDENTIALS)
-        self.connector_invalid_url = CantabularConnector(INVALID_URL, VALID_CREDENTIALS)
+        self.valid_connector = CantabularApiConnector(VALID_URL, VALID_CREDENTIALS)
+        self.connector_invalid_creds = CantabularApiConnector(VALID_URL, INVALID_CREDENTIALS)
+        self.connector_invalid_url = CantabularApiConnector(INVALID_URL, VALID_CREDENTIALS)
 
     @patch('sys.stdout', new_callable=io.StringIO)
     def test_query_isvalid(self, mock_stdout) -> None:
@@ -45,12 +45,12 @@ class TestCantabularConnector(unittest.TestCase):
             self.valid_connector.query(VALID_QUERY_DS, INVALID_QUERY_VARIABLES)
             self.connector_invalid_url.query(VALID_QUERY_DS, VALID_QUERY_VARIABLES)
             self.connector_invalid_creds.query(VALID_QUERY_DS, VALID_QUERY_VARIABLES)
-            CantabularConnector(VALID_URL, INVALID_CREDENTIALS2)
+            CantabularApiConnector(VALID_URL, INVALID_CREDENTIALS2)
 
 
 class TestDataProcessorCluster(unittest.TestCase):
     def setUp(self) -> None:
-        valid_connector = CantabularConnector(VALID_URL, VALID_CREDENTIALS)
+        valid_connector = CantabularApiConnector(VALID_URL, VALID_CREDENTIALS)
         self.valid_table = valid_connector.query(VALID_QUERY_VARIABLES, VALID_QUERY_DS)
         self.a_uuid = str(uuid.uuid4())
 

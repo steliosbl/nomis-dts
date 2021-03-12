@@ -1,45 +1,80 @@
 """Script performs a JSON-stat query."""
-from cantabular_connector import CantabularConnector
+from cantabular_api_connector import CantabularApiConnector
 from nomis_api_connector import NomisApiConnector
 from config_manager import ConfigManager
-from api_connection_info import ApiConnectionInfo
-from args_manager import ArgsManager
-from read_from_file import ReadFromFile
+from configuration import Configuration
+from args_manager import ArgsManager, Arguments
+from dataset_file_reader import DatasetFileReader
 from dataset_transformations import DatasetTransformations
-from logger import Logger
-import json
+import logging
+import sys
 
 
-def new_dataset(nomis_info: ApiConnectionInfo,
-                cantabular_info: ApiConnectionInfo,
-                args: ArgsManager) -> None:
-    nomis_url = nomis_info.get_client()
-    nomis_creds = nomis_info.get_credentials()
-    cantabular_url = cantabular_info.address
-    cantabular_creds = cantabular_info.get_credentials()
+# Initialise logging
+
+logger = logging.getLogger('DTS-Logger')
+logger.propagate = False
+formatter = logging.Formatter(
+    fmt='%(asctime)s [%(levelname)s; in %(filename)s] %(message)s',
+    datefmt='%d/%m/%Y %I:%M:%S %p'
+)
+file_handler = logging.FileHandler("system.log")
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
+
+
+# Collect arguments
+
+with ArgsManager() as a:
+    arguments = a.get_args()
+
+if arguments.verbose:
+    stream_handler = logging.StreamHandler(sys.stdout)
+    logger.addHandler(stream_handler)
+
+if arguments.log_file is not None:  # change s.t. replaces not appends
+    new_file_handler = logging.FileHandler(arguments.log_file)
+    new_file_handler.setFormatter(formatter)
+    logger.addHandler(new_file_handler)
+
+
+# Establish configuration
+
+with ConfigManager(arguments) as c:
+    config = c.decode_configuration()
+
+
+def new_dataset(config: Configuration,
+                args: Arguments
+                ) -> None:
+
+    nomis_url = config.get_client('nomis')
+    nomis_creds = config.get_credentials('nomis')
+    cantabular_url = config.cantabular_api_info.address
+    cantabular_creds = config.get_credentials('cantabular')
     dataset_id, dataset_title, query_variables = args.dataset_id, args.dataset_title, args.query_variables
-    query_dataset, y_flag, filename = args.query_dataset, args.y_flag, args.filename
+    query_dataset, y_flag, filename = args.query_dataset, args.suppress_prompts, args.filename
 
     # Query cantabular using given variables
     if filename is not None:
-        read_from_file = ReadFromFile("query_file_example.json")
-        table = read_from_file.read()
+        read_from_file = DatasetFileReader(args.filename)
+        table = read_from_file.query()
     else:
-        cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
-        table = cantabular_connector.query(query_dataset, query_variables)
+        with CantabularApiConnector(query_dataset, query_variables, cantabular_creds, cantabular_url) as cc:
+            table = cc.query()
 
     ds_transformations = DatasetTransformations(table)
 
     # Create instance of nomis connector
-    nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
+    nomis_connector = NomisApiConnector(nomis_creds, nomis_url)
 
     # Check to see if a dataset already exists with this id
-    dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
+    dataset_exists_code = nomis_connector.get_dataset(dataset_id, return_bool=True)
 
     if not dataset_exists_code:
         # Create a new dataset with given id
 
-        print("-----DATASET CREATION-----")
+        logger.info("-----DATASET CREATION-----")
         dataset_request_body = ds_transformations.dataset_creation(dataset_id, dataset_title)
         nomis_connector.create_dataset(dataset_id, dataset_request_body)
 
@@ -50,10 +85,10 @@ def new_dataset(nomis_info: ApiConnectionInfo,
         category_request_body = ds_transformations.category_creation()
 
         # Check to see variables already exist for the given dimensions
-        print("\n-----VARIABLE CREATION-----")
+        logger.info("\n-----VARIABLE CREATION-----")
         for variable in query_variables:
 
-            variable_exists_code = nomis_connector.variable_exists(variable)
+            variable_exists_code = nomis_connector.get_variable(variable, return_bool=True)
 
             # IF the variable does NOT exist then create it
             if not variable_exists_code:  # mock server always returns True so this is for testing purposes.
@@ -76,51 +111,50 @@ def new_dataset(nomis_info: ApiConnectionInfo,
 
             else:
                 continue
-        print("\n-----ASSIGNING DIMENSIONS-----")
+        logger.info("\n-----ASSIGNING DIMENSIONS-----")
         # Assign dimensions to dataset
         assign_dimensions_requests = ds_transformations.assign_dimensions()
         nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
 
-        print("\n-----APPENDING OBSERVATIONS-----")
+        logger.info("\n-----APPENDING OBSERVATIONS-----")
         # Append observations into dataset
         observations_requests = ds_transformations.observations(dataset_id)
         nomis_connector.overwrite_dataset_observations(dataset_id, observations_requests)
 
-        print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been CREATED successfully.")
+        logger.info(f"\nSUCCESS: A dataset with the ID {dataset_id} has been CREATED successfully.")
 
     else:
         raise Exception("A dataset with this ID already exists.")
 
 
-def update_dataset(nomis_info: ApiConnectionInfo,
-                   cantabular_info: ApiConnectionInfo,
-                   args: ArgsManager) -> None:
-    nomis_url = nomis_info.get_client()
-    nomis_creds = nomis_info.get_credentials()
-    cantabular_url = cantabular_info.address
-    cantabular_creds = cantabular_info.get_credentials()
+def update_dataset(config: Configuration,
+                   args: Arguments) -> None:
+    nomis_url = config.get_client('nomis')
+    nomis_creds = config.get_credentials('nomis')
+    cantabular_url = config.cantabular_api_info.address
+    cantabular_creds = config.get_credentials('cantabular')
     dataset_id, dataset_title, query_variables = args.dataset_id, args.dataset_title, args.query_variables
-    query_dataset, y_flag, filename = args.query_dataset, args.y_flag, args.filename
+    query_dataset, y_flag, filename = args.query_dataset, args.suppress_prompts, args.filename
 
     # Query cantabular using given variables
     if filename is not None:
-        read_from_file = ReadFromFile("cantabular_query_example.json")
-        table = read_from_file.read()
+        read_from_file = DatasetFileReader("cantabular_query_example.json")
+        table = read_from_file.query()
     else:
-        cantabular_connector = CantabularConnector(cantabular_url, cantabular_creds)
-        table = cantabular_connector.query(query_dataset, query_variables)
+        with CantabularApiConnector(query_dataset, query_variables, cantabular_creds, cantabular_url) as cc:
+            table = cc.query()
 
     ds_transformations = DatasetTransformations(table)
 
     # Create instance of nomis connector
-    nomis_connector = NomisApiConnector(nomis_url, nomis_creds)
+    nomis_connector = NomisApiConnector(nomis_creds, nomis_url)
 
     # Check to see if a dataset already exists with this id
-    dataset_exists_code = nomis_connector.dataset_exists(dataset_id)
+    dataset_exists_code = nomis_connector.get_dataset(dataset_id, return_bool=True)
 
     if dataset_exists_code:
 
-        print("\n-----RETRIEVING DIMENSIONS-----")
+        logger.info("\n-----RETRIEVING DIMENSIONS-----")
         assigned_variables_json = nomis_connector.get_dataset_dimensions(dataset_id)
         assigned_variables = []
         non_assigned_variables = []
@@ -144,9 +178,9 @@ def update_dataset(nomis_info: ApiConnectionInfo,
             category_request_body = ds_transformations.category_creation()
 
             # Check to see variables already exist for the given dimensions
-            print("\n-----VARIABLE CREATION-----")
+            logger.info("\n-----VARIABLE CREATION-----")
             for variable in query_variables:
-                variable_exists_code = nomis_connector.variable_exists(variable)
+                variable_exists_code = nomis_connector.get_variable(variable, return_bool=True)
 
                 # IF the variable does NOT exist then create it
                 if not variable_exists_code:  # mock server always returns True so this is for testing purposes.
@@ -170,17 +204,17 @@ def update_dataset(nomis_info: ApiConnectionInfo,
                     continue
 
             # Assign dimensions to dataset
-            print("\n-----OVERWRITING DIMENSIONS-----")
+            logger.info("\n-----OVERWRITING DIMENSIONS-----")
             nomis_connector.delete_dimensions(dataset_id)
             assign_dimensions_requests = ds_transformations.assign_dimensions()
             nomis_connector.assign_dimensions_to_dataset(dataset_id, assign_dimensions_requests)
 
         # Append observations into dataset
-        print("\n-----OVERWRITING OBSERVATIONS-----")
+        logger.info("\n-----OVERWRITING OBSERVATIONS-----")
         observations_request = ds_transformations.observations(dataset_id)
         nomis_connector.overwrite_dataset_observations(dataset_id, observations_request)
 
-        print(f"\nSUCCESS: A dataset with the ID {dataset_id} has been UPDATED successfully.")
+        logger.info(f"\nSUCCESS: A dataset with the ID {dataset_id} has been UPDATED successfully.")
 
     else:
         raise Exception("A dataset with this ID does NOT exist.")
@@ -189,74 +223,36 @@ def update_dataset(nomis_info: ApiConnectionInfo,
 ##############################
 
 
-args = ArgsManager()
-logs = Logger(verbose=args.v_flag, log_file=args.log_file)
-
-
-##############################
-c = ConfigManager()
-
-print("")
-print("Configuration")
-config = c.decode_into_configuration()
-print(config.validate())
-
-print("")
-print("Cantabular Credentials")
-cant_creds = c.decode_into_cantabular_credentials()
-print(cant_creds.validate())
-
-print("")
-print("Cantabular Connecton Information")
-cant_conn = c.decode_into_cantabular_connection_info()
-print(cant_conn.validate())
-
-print("")
-print("Nomis Credentials")
-nom_creds = c.decode_into_nomis_credentials()
-print(nom_creds.validate())
-
-print("")
-print("Nomis Connecton Information")
-nom_conn = c.decode_into_nomis_connection_info()
-print(nom_conn.validate())
-
-print("")
-print("Cantabular Complete API Connecton Information")
-cant = c.create_api_connection_info(cant_creds, cant_conn)
-print(cant.port)
-
-print("")
-print("Nomis Complete API Connecton Information")
-nom = c.create_api_connection_info(nom_creds, nom_conn)
-print(nom.port + "\n")
 #################################################################
 
-########## EXAMPLES ##########
-
-nomis_creds = (nom.username, nom.password)
-nomis_addr = nom.get_client()
-
-cantabular_addr = cant.address
-cantabular_creds = (cant.username, cant.password)
-
-nomis_connector = NomisApiConnector(nomis_addr, nomis_creds)
+# ######### EXAMPLES ##########
 
 is_update = "y"
 
-if nomis_connector.dataset_exists(args.dataset_id):
+with NomisApiConnector(config.get_credentials('nomis'), config.get_client('nomis')) as c:
 
-    if not args.y_flag:
-        is_update = str(input(
-            "--- A DATASET WITH THE ID " + args.dataset_id + " ALREADY EXISTS ---\n*** DO YOU WANT TO OVERWRITE/UPDATE y/n ***\n"))
+    if c.get_dataset(arguments.dataset_id, return_bool=True):
 
-    if is_update == "y":
-        update_dataset(nom, cant, args)
+        if not arguments.suppress_prompts:
+            is_update = str(input(
+                "--- A DATASET WITH THE ID " + arguments.dataset_id + " ALREADY EXISTS ---"
+                                                                 "\n*** DO YOU WANT TO OVERWRITE/UPDATE y/n ***\n"))
 
-    elif is_update == "n":
-        print("*** DATASET HAS NOT BEEN UPDATED ***")
+        if is_update == "y":
+            update_dataset(config, arguments)
 
+        elif is_update == "n":
+            logger.info("*** DATASET HAS NOT BEEN UPDATED ***")
+
+        else:
+            raise Exception("'" + is_update + "' is not a valid option. Please try again!")
     else:
-        raise Exception("'" + is_update + "' is not a valid option. Please try again!")
-else:
-    new_dataset(nom, cant, args)
+        new_dataset(config, arguments)
+
+
+# def main():
+#     pass
+#
+#
+# if __name__ == '__main__':
+#     main()

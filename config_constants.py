@@ -1,33 +1,33 @@
-DEFAULT_PATH = './config.json'
+import os
+DEFAULT_PATH = os.path.join('config.json')
 DEFAULT_CONFIG_FILE = '''
 {
   "Cantabular Credentials": {
-    "username": null,
-    "password": null,
+    "username": "durham.project",
+    "password": "extra.carrot.slowly",
     "key": null
   },
   "Cantabular Connection Information": {
-    "api": "cantabular",
-    "address": "localhost",
+    "address": "https://ftb-api-ext.ons.sensiblecode.io",
     "port": "8491"
   },
   "Nomis Credentials": {
-    "username": null,
-    "password": null,
+    "username": "user",
+    "password": "pass",
     "key": null
   },
   "Nomis Connection Information": {
-    "api": "nomis",
-    "address": "https://www.nomisweb.co.uk/api/v2",
-    "port": "1234"
+    "address": "https://localhost",
+    "port": "5001"
   },
-  "Dataset Information": {
-    "input_format": null,
-    "output_format": "JSON",
-    "data_type": "Data",
-    "dataset_size": null
+  "Nomis Metadata Credentials": {
+    "username": "user",
+    "password": "pass",
+    "key": null
+  },
+  "Nomis Metadata Connection Information": {
+    "address": "https://localhost",
+    "port": "5001"
   }
 }
 '''
-VALID_FORMATS = ["json", "csv", "json-stat"]   # A list of acceptable input/output data formats for validation purposes
-MAX_SIZE = 1000000  # arbitrary for now, might be pointless

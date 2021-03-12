@@ -1,77 +1,73 @@
-from config_constants import VALID_FORMATS, MAX_SIZE
+from type_hints import *
+from logging import getLogger
+from credentials import Credentials
+from connection_info import ConnectionInfo
+logger = getLogger("DTS-Logger")
 
 
 class Configuration:
-    """Class containing configuration information
+    """Class to hold instances of Credentials and ConnectionInfo for all of the APIs that the program communicates with.
 
-    :param input_format:
-    :param output_format:
-    :param data_type:
-    :param dataset_size:
+    :param cantabular_api_info: Connection information for the Cantabular API
+    :param cantabular_api_credentials: Credentials for the Cantabular API
+    :param nomis_api_info: Connection information for the Nomis API
+    :param nomis_api_credentials: Credentials for the Nomis API
+    :param nomis_metadata_api_info: Connection information for the Nomis metadata API
+    :param nomis_metadata_api_credentials: Credentials for the Nomis metadata API
+
+    :ivar cantabular_api_info: initial value: cantabular_api_info
+    :ivar cantabular_api_credentials: initial value: cantabular_api_credentials
+    :ivar nomis_api_info: initial value: nomis_api_info
+    :ivar nomis_api_credentials: initial value: nomis_api_credentials
+    :ivar nomis_metadata_api_info: initial value: nomis_metadata_api_info
+    :ivar nomis_metadata_api_credentials: initial value: nomis_metadata_api_credentials
     """
 
-    def __init__(self, input_format: str, output_format: str, data_type: str, dataset_size: int) -> None:
+    cantabular_api_info: ConnectionInfo
+    cantabular_api_credentials: Credentials
+    nomis_api_info: ConnectionInfo
+    nomis_api_credentials: Credentials
+    nomis_metadata_api_info: ConnectionInfo
+    nomis_metadata_api_credentials: Credentials
 
-        self.input_format = input_format
-        self.output_format = output_format
-        self.data_type = data_type          # i.e. data or metadata
-        self.dataset_size = dataset_size    # i.e. the number of rows in an unweighted dataset
-        self.is_valid = False
+    def __init__(self,
+                 cantabular_api_info: ConnectionInfo, cantabular_api_credentials: Credentials,
+                 nomis_api_info: ConnectionInfo, nomis_api_credentials: Credentials,
+                 nomis_metadata_api_info: ConnectionInfo, nomis_metadata_api_credentials: Credentials,
+                 ) -> None:
+        self.cantabular_api_info = cantabular_api_info
+        self.cantabular_api_credentials = cantabular_api_credentials
+        self.nomis_api_info = nomis_api_info
+        self.nomis_api_credentials = nomis_api_credentials
+        self.nomis_metadata_api_info = nomis_metadata_api_info
+        self.nomis_metadata_api_credentials = nomis_metadata_api_credentials
 
-    def validate(self) -> bool:
-        """Method to validate the configuration attributes
-        Mandatory: input_format, output_format - To validate, check if they are in the list of acceptable formats
-        Optional: data_type, size - To validate, check if data type is either data or metadata, and size is within limit
-
-        :return bool:
+    def get_credentials(self, api: str) -> Tuple[str, str]:
+        """Method for returning the credentials of a given API in the form of a tuple
+        :param api: string representing the api credentials to receive: nomis, nomis_metadata, or cantabular
+        :raises ValueError: if the api parameter is unknown
+        :return: A tuple containing the username and password for the request API, respectively
         """
-
-        self.is_valid = True
-
-        try:
-            if self.input_format is None \
-                    or self.input_format.lower() not in VALID_FORMATS:
-                raise Exception
-            else:
-                print(f"Input format {self.input_format} is valid.")
-        except:
-            print(f"Input format {self.input_format} is invalid.")
-            self.is_valid = False
-
-        try:
-            if self.output_format is None \
-                    or self.output_format.lower() not in VALID_FORMATS:
-                raise Exception
-            else:
-                print(f"Output format {self.output_format} is valid.")
-        except:
-            print(f"Output format {self.output_format} is invalid.")
-            self.is_valid = False
-
-        if self.data_type is not None:
-            try:
-                if self.data_type.lower() != "data" \
-                        and self.data_type.lower() != "metadata":
-                    raise Exception
-                else:
-                    print(f"Data type {self.data_type} is valid.")
-            except:
-                print(f"Data type {self.data_type} is invalid.")
-                self.is_valid = False
+        if api.lower() == 'nomis':
+            return self.nomis_api_credentials.username, self.nomis_api_credentials.password
+        elif api.lower() == 'nomis_metadata':
+            return self.nomis_metadata_api_credentials.username, self.nomis_metadata_api_credentials.password
+        elif api.lower() == 'cantabular':
+            return self.cantabular_api_credentials.username, self.cantabular_api_credentials.password
         else:
-            print("No data type inputted, but since not mandatory. will pass.")
+            raise ValueError(f"API {api} not recognised.")
 
-        if self.dataset_size is not None:
-            try:
-                if self.dataset_size > MAX_SIZE:
-                    print(f"Size {self.dataset_size} is invalid, above maximum.")
-                    self.is_valid = False
-                else:
-                    print(f"Size {self.dataset_size} is valid.")
-            except:
-                print("Size invalid, but since not mandatory, will pass.")
+    def get_client(self, api: str) -> str:
+        """Method for returning the concatenation of an APIs address and port
+        :param api: string representing the api to receive the client for: nomis, nomis_metadata, or cantabular
+        :raises ValueError: if the api parameter is unknown
+        :return: A string representing a concatenation of the address and the port, separated by a colon
+        """
+        if api.lower() == 'nomis':
+            return str(f'{str(self.nomis_api_info.address)}:{str(self.nomis_api_info.port)}')
+        elif api.lower() == 'nomis_metadata':
+            return str(f'{str(self.nomis_metadata_api_info.address)}:{str(self.nomis_metadata_api_info.port)}')
+        elif api.lower() == 'cantabular':
+            return str(f'{str(self.cantabular_api_info.address)}:{str(self.cantabular_api_info.port)}')
         else:
-            print("No size inputted, but since not mandatory, will pass.")
-
-        # No False returned, so must be valid
-        return self.is_valid
+            raise ValueError(f"API {api} not recognised.")
