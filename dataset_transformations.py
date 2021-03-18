@@ -46,7 +46,6 @@ class DatasetTransformations:
         ds = {
             "id": dataset_id,
             "title": dataset_title,
-            "metadata": None,
             "contactId": None,
             "isAdditive": False,
             "isFlagged": False,
@@ -67,8 +66,7 @@ class DatasetTransformations:
         requests = [{
             "name": dimension,
             "label": self.table["dimension"][dimension]["label"],
-            "metadata": None,
-            "defaults": self.table["dimension"][dimension]["category"]["index"]
+            "defaults": None
         }
             for dimension in self.table["dimension"]]
         return requests
@@ -85,7 +83,6 @@ class DatasetTransformations:
                         "code": label,
                         "title": self.table["dimension"][dimension]["category"]["label"][label],
                         "ancestors": None,
-                        "metadata": None,
                         "typeId": None,
                         "validity": {
                             "select": True,
