@@ -6,7 +6,8 @@ import sys
 
 class ArgsManager:
     """Class for handling the input arguments, utilising the argparse library module. Allows for command line arguments
-    in the form: filename.py {QUERY in quotes} -i {ID} -t {TITLE} -y (for yes to all prompts) -v (for verbose)
+    in the form:
+    - filename.py {metadata | data} -f {FILENAME (optional)} -q {QUERY in quotes} -i {ID} -t {TITLE} -y (for yes to all prompts) -v (for verbose)
 
     :ivar parser: An argparse ArgumentParser object for collecting arguments from the terminal
     """
