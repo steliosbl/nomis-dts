@@ -1,5 +1,5 @@
-from type_hints import *
 from file_reader import FileReader
+from type_hints import *
 import argparse
 import os
 
@@ -9,19 +9,21 @@ class Arguments:
 
     :param arguments: Parsed argparse object containing the arguments for the program
 
+    :ivar metadata: Read in as a string and resolved to a Boolean: indicates whether the metadata or normal (i.e. data)
+    program pipeline is used
     :ivar filename: Location of a file to read from instead of querying Cantabular
-
     :ivar query_variables: Parameter for querying Cantabular
     :ivar dataset_id: Parameter for querying Cantabular
     :ivar dataset_title: Parameter for querying Cantabular
     :ivar query_dataset: Parameter for querying Cantabular
-
     :ivar suppress_prompts: Toggle for suppressing prompts
     :ivar verbose: Toggle for a verbose out during runtime
-
     :ivar log_file: For overriding the default location of the log file
     :ivar config_file: For overriding the default location of the config file
     """
+
+    # Metadata toggle
+    metadata: Union[str, bool]
 
     # Location of a file to read from instead of querying Cantabular
     filename: Union[str, None]
@@ -41,6 +43,8 @@ class Arguments:
     config_file: Union[str, None]
 
     def __init__(self, arguments: argparse.Namespace) -> None:
+        self.metadata = arguments.metadata
+        self.metadata_format = arguments.metadata_format
         self.filename = arguments.filename
         self.query_variables = arguments.query_variables
         self.dataset_id = arguments.dataset_id
@@ -59,31 +63,45 @@ class Arguments:
         :raises FileNotFoundError: If the inputs for filename or config_file aren't paths to existing files
         :raises IOError: If the arguments for filename or config_file aren't .json, or log_file isn't .log
         """
+        # Resolve metadata
+        if self.metadata == 'metadata':
+            self.metadata = True
+        elif self.metadata == 'data':
+            self.metadata = False
+        else:
+            raise ValueError("Program only supports 'data' or 'metadata' modes.")
+
+        if self.metadata:
+            if self.metadata_format is None:
+                raise ValueError("Must include metadata format (-r flag) to handle metadata.")
+            elif self.metadata_format != 'O' and self.metadata_format != 'C':
+                raise ValueError("Invalid argument for metadata format.")
+        else:
+            if self.metadata_format is not None:
+                print("-r flag will be ignored.")
+            if self.dataset_id is None:
+                raise ValueError("Must include dataset id (-i flag) if not handling metadata.")
+            if self.dataset_title is None:
+                raise ValueError("Must include dataset title (-t flag) if not handling metadata.")
 
         if self.filename is None:
+            if self.metadata:
+                raise ValueError("Currently this utility only supports reading from a file for metadata.")
+            else:
+                if self.query_variables is None:
+                    raise ValueError("Must include query variables (-q flag) if not using a file.")
+                if self.query_dataset is None:
+                    raise ValueError("Must include query dataset (-d flag) if not using a file.")
 
-            if self.query_variables is None:
-                raise ValueError("Must include query variables (-q flag) if not using a file.")
-            if self.dataset_id is None:
-                raise ValueError("Must include dataset id (-i flag) if not using a file.")
-            if self.dataset_title is None:
-                raise ValueError("Must include dataset title (-t flag) if not using a file.")
-            if self.query_dataset is None:
-                raise ValueError("Must include query dataset (-d flag) if not using a file.")
+                self.query_variables = self.query_variables.split(", ")
+                for s in self.query_variables:
+                    if len(s) == 0:
+                        raise ValueError("query_variable contains empty strings")
 
-            self.query_variables = self.query_variables.split(", ")
-            for s in self.query_variables:
-                if len(s) == 0:
-                    raise ValueError("query_variable contains empty strings")
-
-        else:
+        elif not self.metadata:
             ignore: List[str] = []
             if self.query_variables is not None:
                 ignore.append("-q")
-            if self.dataset_id is not None:
-                ignore.append("-i")
-            if self.dataset_title is not None:
-                ignore.append("-t")
             if self.query_dataset is not None:
                 ignore.append("-d")
             if len(ignore) > 0:

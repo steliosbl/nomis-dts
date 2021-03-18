@@ -8,8 +8,19 @@ class DatasetTransformations:
     :param table: a pyjstat dataframe containing the data to be used/transformed
     :ivar table: initial value: table
     """
-    def __init__(self, table: pyjstat.Dataset):
+
+    def __init__(self, table: pyjstat.Dataset = None):
         self.table = table
+        self.validate_table()
+
+    def validate_table(self):
+        """Method for validating the table, ensuring it is of the correct type and contains sufficient keys
+        """
+        if not isinstance(self.table, pyjstat.Dataset):
+            raise TypeError(f"Table was detected as type {type(self.table)}. "
+                            f"This is invalid, the table must be a pyjstat.Dataset.")
+        if "dimension" not in self.table:
+            raise KeyError("Table supplied contains no dimensions key.")
 
     @staticmethod
     def dataset_creation(dataset_id: str, dataset_title: str) -> NomisDataset:
@@ -26,7 +37,7 @@ class DatasetTransformations:
         if not isinstance(dataset_id, str):
             raise TypeError(f"The dataset id (inputted: {dataset_id}) must be a string.")
         if not isinstance(dataset_title, str):
-            raise TypeError(f"The dataset id (inputted: {dataset_title}) must be a string.")
+            raise TypeError(f"The dataset title (inputted: {dataset_title}) must be a string.")
         if len(dataset_id) == 0:
             raise ValueError(f"The dataset id must not be empty.")
         if len(dataset_title) == 0:
@@ -51,111 +62,124 @@ class DatasetTransformations:
         with the Nomis API
 
         :raises KeyError: If the dataframe doesn't contain any dimension information
-        :return:
+        :return: A list of variables
         """
-        if "dimension" not in self.table:
-            raise KeyError("Table supplied contains no dimensions key.")
-
-        requests = []
-        for dimension in self.table["dimension"]:
-            variable = {
-                "name": dimension,
-                "label": self.table["dimension"][dimension]["label"],
-                "metadata": None,
-                "defaults": self.table["dimension"][dimension]["category"]["index"]
-            }
-            requests.append(variable)
-
+        requests = [{
+            "name": dimension,
+            "label": self.table["dimension"][dimension]["label"],
+            "metadata": None,
+            "defaults": self.table["dimension"][dimension]["category"]["index"]
+        }
+            for dimension in self.table["dimension"]]
         return requests
 
-    def category_creation(self) -> Union[List[Variables], None]:
-        """
-        :raises:
-        :return:
-        :rtype: list|None
+    def category_creation(self) -> List[Variables]:
+        """Method for constructing a list of variable categories, using the jsonstat table retrieved from cantabular
+        :return: A list of variable categories
         """
         requests = []
-        try:
-            for dimension in self.table["dimension"]:
-                for label in self.table["dimension"][dimension]["category"]["label"]:
-                    requests.append(
-                        {
-                            "code": label,
-                            "title": self.table["dimension"][dimension]["category"]["label"][label],
-                            "ancestors": None,
-                            "metadata": None,
-                            "typeId": None,
-                            "validity": {
-                                "select": True,
-                                "make": False
-                            }
+        for dimension in self.table["dimension"]:
+            for label in self.table["dimension"][dimension]["category"]["label"]:
+                requests.append(
+                    {
+                        "code": label,
+                        "title": self.table["dimension"][dimension]["category"]["label"][label],
+                        "ancestors": None,
+                        "metadata": None,
+                        "typeId": None,
+                        "validity": {
+                            "select": True,
+                            "make": False
                         }
-                    )
+                    }
+                )
+        return requests
 
-            return requests
-        except:
-            raise Exception("Error: Table Supplied is Null or Invalid")
-
-    def assign_dimensions(self) -> Dimensions:
+    def assign_dimensions(self) -> List[Dimensions]:
+        """Method for using the jsonstat table to construct a list of dimensions, based on the initial query to
+        cantabular
+        :return: A list of dataset dimensions
         """
-        :raises:
-        :return:
-        :rtype:
+        requests = [{
+            "name": dimension,
+            "label": self.table["dimension"][dimension]["label"],
+            "isAdditive": True,
+            "variable": {
+                "name": dimension,
+                "view": None
+            },
+            "role": "Measures",
+            "canFilter": True,
+            "defaults": self.table["dimension"][dimension]["category"]["index"],
+            "database": {
+                "isKey": False,
+                "index": 0,
+                "defaultView": None,
+                "discontinuities": None
+            },
+        }
+            for dimension in self.table["dimension"]]
+        return requests
+
+    def observations(self, dataset_id: str) -> Observations:
+        """Method for creating dataset observations
+
+        :param dataset_id: A valid dataset ID
+        :return: A python dict representing dataset dimensions
         """
-        requests = []
-        try:
-            for dimension in self.table["dimension"]:
-                variable = {
-                    "name": dimension,
-                    "label": self.table["dimension"][dimension]["label"],
-                    "isAdditive": True,
-                    "variable": {
-                        "name": dimension,
-                        "view": None
-                    },
-                    "role": "Measures",
-                    "canFilter": True,
-                    "defaults": self.table["dimension"][dimension]["category"]["index"],
-                    "database": {
-                        "isKey": False,
-                        "index": 0,
-                        "defaultView": None,
-                        "discontinuities": None
-                    },
-                }
-                requests.append(variable)
+        if not isinstance(dataset_id, str):
+            raise TypeError(f"The dataset id (inputted: {dataset_id}) must be a string.")
+        if len(dataset_id) == 0:
+            raise ValueError(f"The dataset id must not be empty.")
 
-            return requests
-        except:
-            raise Exception("Error: Table Supplied is Null or Invalid")
-
-    def observations(self, dataset_id: str) -> Union[Observations, None]:
-        """[Description]
-
-        :param dataset_id:
-        :type dataset_id: str
-
-        :raises Exception:
-        :return:
-        :rtype: list|None
-        """
         dimensions = []
         codes = []
-        try:
 
-            for dimension in self.table["dimension"]:
-                dimensions.append(dimension)
-                codes.append(self.table["dimension"][dimension]["category"]["index"])
+        for dimension in self.table["dimension"]:
+            dimensions.append(dimension)
+            codes.append(self.table["dimension"][dimension]["category"]["index"])
 
-            return(
+        return (
+            {
+                "dataset": dataset_id,
+                "dimensions": dimensions,
+                "codes": codes,
+                "values": self.table["value"],
+                "statuses": None
+            }
+        )
+
+    @staticmethod
+    def variable_metadata_request(uuids_metadata: List[UuidMetadata]) -> list:
+        """Method for the construction of metadata in a format ready to be transmitted to Nomis
+        :param uuids_metadata: A list of namedtuples, each containing a uuid and some metadata associated with that uuid
+        :return: A list of metadata, ready to be sent to the Nomis system
+        """
+        if not isinstance(uuids_metadata, list):
+            raise TypeError("Parameter must be in a list.")
+        for elem in uuids_metadata:
+            if not isinstance(elem, UuidMetadata):
+                raise TypeError("Parameter contains invalid types.")
+        requests = [{
+            "id": None,
+            "belongsTo": id_md.uuid,
+            "description": None,
+            "created": None,
+            "validFrom": None,
+            "validTo": None,
+            "include": None,
+            "meta": [
                 {
-                    "dataset": dataset_id,
-                    "dimensions": dimensions,
-                    "codes": codes,
-                    "values": self.table["value"],
-                    "statuses": None
+                    "role": "note",
+                    "properties": [
+                        {
+                            "prefix": "dc",
+                            "property": "description",
+                            "value": id_md.metadata["description"]
+                        }
+                    ]
                 }
-            )
-
-        except:
-            raise Exception("Error: Table Supplied is Null or Invalid")
+            ]
+        }
+            for id_md in uuids_metadata]
+        return requests

@@ -20,11 +20,11 @@ for instance,
 
 VALID_ADDRESS = 'https://localhost'
 VALID_CREDENTIALS = ('a', 'b')
-VALID_PORT = '5001'
+VALID_PORT = '5005'
 VALID_OBJECT_ID = "7b9568e3-019e-4faf-8a50-98c66332ba09"
 
 
-VALID_METADATA = {
+VALID_METADATA = [{
   "belongsTo": str(uuid.uuid4()),
   "description": "test",
   "created": "2021-02-24T14:14:32.202Z",
@@ -45,7 +45,7 @@ VALID_METADATA = {
       ]
     }
   ]
-}
+}]
 
 # todo: add invalid cases
 
@@ -53,9 +53,9 @@ VALID_METADATA = {
 class TestMetadataConnector(unittest.TestCase):
     def setUp(self) -> None:
         self.headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
-        self.obj_id = VALID_METADATA["belongsTo"]
-        self.valid_connector = NomisMetadataApiConnector(('a', 'b'), "https://localhost", '5001')
-        self.uuid = self.valid_connector.add_new_metadata(VALID_METADATA)
+        self.obj_id = VALID_METADATA[0]["belongsTo"]
+        self.valid_connector = NomisMetadataApiConnector(VALID_CREDENTIALS, VALID_ADDRESS, VALID_PORT)
+        self.uuid = self.valid_connector.add_new_metadata(VALID_METADATA, True)[0]
 
     def tearDown(self) -> None:
         self.valid_connector.session.delete(f"{self.valid_connector.client}/Definitions/{self.uuid}", verify=False)
@@ -67,7 +67,7 @@ class TestMetadataConnector(unittest.TestCase):
         self.assertIsInstance(self.valid_connector.get_metadata_by_id(self.uuid), dict)
     
     def test_add_new_metadata(self):
-        this_uuid = self.valid_connector.add_new_metadata(VALID_METADATA)
+        this_uuid = self.valid_connector.add_new_metadata(VALID_METADATA, True)[0]
         self.assertIsInstance(this_uuid, str)
         self.valid_connector.session.delete(f"{self.valid_connector.client}/Definitions/{this_uuid}", verify=False)
         

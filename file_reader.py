@@ -1,4 +1,5 @@
 from type_hints import *
+import chardet
 import json
 import os
 
@@ -22,16 +23,23 @@ class FileReader:
         pass
 
     def exists(self) -> bool:
+        """Ensure the file exists by checking the path
+        """
         if not os.path.exists(self.file):
             raise FileNotFoundError(f"The file {self.file} could not be located.")
         else:
             return True
 
     def load_json(self) -> Union[dict, str]:
-        with open(self.file) as json_file:
-            data = json.loads(json_file.read())
+        """Check the encoding of the file and load it in as a json string
+        """
+        enc = chardet.detect(open(self.file, 'rb').read())['encoding']
+        with open(self.file, 'r', encoding=enc) as json_file:
+            data = json.load(json_file)
         return data
 
     def write_json(self, to_write: str) -> None:
+        """Write out a json file
+        """
         with open(self.file, 'w') as f:
             json.dump(to_write, f, indent=2)

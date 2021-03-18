@@ -1,6 +1,6 @@
+from logging import getLogger
 from pyjstat import pyjstat
 from abc import abstractmethod
-from logging import getLogger
 logger = getLogger("DTS-Logger")
 
 
@@ -10,10 +10,15 @@ class DataSource:
 
     @abstractmethod
     def query(self) -> pyjstat.Dataset:
+        """Abstract method for querying Cantabular; will be filled in accordingly by classes who inherit this
+        """
         pass
 
     @staticmethod
-    def load_jsonstat(data) -> pyjstat.Dataset:
+    def load_jsonstat(data: str) -> pyjstat.Dataset:
+        """Static method for taking a jsonstat string and returning a valid/verified pyjstat table
+        """
+
         # Load response into a pyjstat dataframe.
         table = pyjstat.Dataset.read(data)
 

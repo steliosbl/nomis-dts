@@ -1,28 +1,22 @@
-from pyjstat import pyjstat
-from logging import getLogger
 from data_source import DataSource
 from file_reader import FileReader
+from logging import getLogger
+from pyjstat import pyjstat
+import json
 logger = getLogger('DTS-Logger')
 
 
 class DatasetFileReader(FileReader, DataSource):
-    """[Description]
+    """Class for handling datasets read from files locally rather than queried directly from Cantabular
     """
     def __init__(self, file: str) -> None:
         super().__init__(file)
 
     def query(self) -> pyjstat.Dataset:
-        """[Description]
+        """The file equivalent of querying cantabular; i.e., ensuring the inputted file exists and converting it into
+        a usable pyjstat Dataset (table)
         :raises FileNotFoundError: If the input file path can't be located
-
         :return: A cantabular table in the form of a jsonstat dataframe
         """
         self.exists()
-        return self.load_jsonstat(self.load_json())
-
-
-# EXAMPLE
-
-# read_from_file = readFromFile("query_file_example.json")
-# table = read_from_file.read()
-# logger.info(table)
+        return self.load_jsonstat(json.dumps(self.load_json()))

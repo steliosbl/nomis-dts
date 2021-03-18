@@ -7,12 +7,6 @@ from logging import getLogger
 logger = getLogger('DTS-Logger')
 
 
-# 10/03/2021:
-# - Merged dataset_exists() with get_dataset(): new param for get_dataset(), return_bool: bool, will enforce a bool to
-#   be returned instead of the dataset, i.e. replicating dataset_exists()'s functionality.
-# - Same as above for variable_exists() and get_variable().
-
-
 requests.packages.urllib3.disable_warnings() 
 
 
@@ -213,6 +207,7 @@ class NomisApiConnector(ApiConnector):
         appropriate exception is raised.
 
         :param id: A string that is in a valid id format.
+        :param return_bool: Return a bool instead of the dimensions themselves
 
         :raises TypeError: If the validate_id() method detects that the id is not a string.
         :raises ValueError: If the validate_id() method detects that the dataset uuid is not in the correct UUID format.
@@ -244,50 +239,9 @@ class NomisApiConnector(ApiConnector):
         elif res.status_code == 404:
             if return_bool:
                 return False
-            raise requests.HTTPError(f"Dataset (id: '{id}') not found, or has no dimensions.")
+            raise requests.HTTPError(f"Dataset (id: '{id}') not found, or has no dimensions. ({res.text})")
         else:
-            raise Exception(f"Unexpected response with status code {res.status_code}.")
-
-    def delete_dimensions(self, id: str) -> bool:
-        """Method for deleting dimensions from a dataset that exists in the Nomis database.
-
-        :param id: A string that is in a valid id format.
-
-        :raises TypeError: If the validate_id() method detects that the id is not a string.
-        :raises ValueError: AIf the validate_id() method detects that the inputted id is not in the correct UUID format.
-        :raises requests.HTTPError: If either connecting to the API is unsuccessful or a negative response is received.
-
-        :return: True if dimensions are assigned successfully, otherwise an exception is raised.
-        """
-        # Type/value checking
-        self.validate_id(id)
-
-        # Make request: Delete dimensions from this dataset.
-        try:
-            res = self.session.delete(
-                f'{self.client}/Datasets/{id}/dimensions',
-                verify=False
-            )
-        except Exception as e:
-            raise requests.ConnectionError(f"Unable to connect to client. ({e})")
-
-        # Handle response
-        if res.status_code == 204:
-            logger.info("Dimensions deleted successfully.")
-            return True
-        elif res.status_code == 400:
-            raise requests.HTTPError("Bad request.")
-        elif res.status_code == 403:
-            raise requests.HTTPError("Forbidden request.")
-        elif res.status_code == 404:
-            raise requests.HTTPError(f"Dataset (id: '{id}') not found.")
-        elif res.status_code == 409:
-            raise requests.HTTPError("Conflicting dimensions.")
-        elif res.status_code == 500:
-            return True
-            # raise requests.HTTPError("ERROR: Request unsuccessful due to a server-side error.")
-        else:
-            raise Exception(f"Unexpected response with status code {res.status_code}.")
+            raise Exception(f"Unexpected response with status code {res.status_code}. ({res.text}).")
 
     # PUT | DATASET-ADMIN
     def assign_dimensions_to_dataset(self, id: str, dims: Union[list, dict]) -> bool:
@@ -307,7 +261,6 @@ class NomisApiConnector(ApiConnector):
         if not isinstance(dims, (list, dict)):
             raise TypeError("Invalid dimensions.")
 
-        print(dims)
         # Make request: Assign dimensions to this dataset.
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
         try:
@@ -325,17 +278,17 @@ class NomisApiConnector(ApiConnector):
             logger.info("Dimensions assigned successfully.")
             return True
         elif res.status_code == 400:
-            raise requests.HTTPError("Bad input parameters.")
+            raise requests.HTTPError(f"Bad input parameters. ({res.text}).")
         elif res.status_code == 403:
-            raise requests.HTTPError("Forbidden request.")
+            raise requests.HTTPError(f"Forbidden request. ({res.text}).")
         elif res.status_code == 404:
-            raise requests.HTTPError(f"Dataset (id: '{id}') not found.")
+            raise requests.HTTPError(f"Dataset (id: '{id}') not found. ({res.text}).")
         elif res.status_code == 409:
-            raise requests.HTTPError("Conflicting dimensions.")
+            raise requests.HTTPError(f"Conflicting dimensions. ({res.text}).")
         elif res.status_code == 500:
             raise requests.HTTPError(f"Request unsuccessful due to a server-side error. ({res.text})")
         else:
-            raise Exception(f"Unexpected response with status code {res.status_code}.")
+            raise Exception(f"Unexpected response with status code {res.status_code}. ({res.text}).")
 
     # POST | DATASET-ADMIN
     def append_dataset_observations(self, id: str, obs: Observations) -> bool:
@@ -426,13 +379,13 @@ class NomisApiConnector(ApiConnector):
     # Variables
 
     # GET | PUBLIC
-    def get_variable(self, name: Union[str, None] = None, return_bool: bool = False) -> Union[List[Variables], bool]:
+    def get_variable(self, name: Union[str, None] = None,
+                     return_bool: bool = False) -> Union[Variables, List[Variables], bool]:
         """Method for retrieving an existing variable, or simply checking for its existence and returning a Boolean
         confirmation.
 
         :param name: Unique name of the variable.
-        :param return_bool: Admin parameter; returns True or False instead of returning the variable or raising
-        exception in the case of a 200 or 404 response.
+        :param return_bool: Admin parameter; returns False instead of raising an exception if variable not found
 
         :raises TypeError: If the name param is not a string.
         :raises ValueError: If the name param is not in a valid format.
@@ -455,9 +408,6 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            if return_bool:
-                logger.info(f"Queried variable (name: '{name}') exists.")
-                return True
             logger.info(f"Queried variable (name: '{name}') retrieved.")
             return res.json()
         elif res.status_code == 400:
@@ -605,6 +555,7 @@ class NomisApiConnector(ApiConnector):
 
         :return: True will be returned upon a successful request; an appropriate error will be raised otherwise.
         """
+        print(cat)
         # Validation
         if not isinstance(name, str):
             logger.info("Invalid name, must be a string.")

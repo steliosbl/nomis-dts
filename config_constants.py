@@ -1,4 +1,5 @@
 import os
+
 DEFAULT_PATH = os.path.join('config.json')
 DEFAULT_CONFIG_FILE = '''
 {

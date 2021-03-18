@@ -1,17 +1,18 @@
-import json
-from type_hints import *
-from configuration import Configuration
-from connection_info import ConnectionInfo
-from credentials import Credentials
 from config_constants import DEFAULT_PATH, DEFAULT_CONFIG_FILE
+from connection_info import ConnectionInfo
+from configuration import Configuration
+from credentials import Credentials
+from file_reader import FileReader
+from type_hints import *
 from arguments import Arguments
 from logging import getLogger
-from file_reader import FileReader
+import json
 logger = getLogger('DTS-Logger')
 
 
 class ConfigManager:
-    """Class for handling the program configuration
+    """Class for handling the program configuration, including reading from default or customised file paths, writing
+    default files, and decoding JSON configuration into relevant classes
 
     :param args: An instance of the arguments manager, which may contain an alternate config file
     """
@@ -76,6 +77,12 @@ class ConfigManager:
         except KeyError:
             logger.info(f"Config file does not contain sufficient {key}. Using default")
             creds = json.dumps(self.default[key])
+        if "username" not in creds:
+            raise KeyError(f"{key} missing 'username' attribute.")
+        if "password" not in creds:
+            raise KeyError(f"{key} missing 'password' attribute.")
+        if "key" not in creds:
+            raise KeyError(f"{key} missing 'key' attribute.")
         return json.loads(creds, object_hook=lambda d: Credentials(**d))
 
     def decode_connection_info(self, key: str) -> ConnectionInfo:
@@ -88,6 +95,10 @@ class ConfigManager:
         except KeyError:
             logger.info(f"Config file does not contain sufficient {key}. Using default config.")
             conn_info = json.dumps(self.default[key])
+        if "address" not in conn_info:
+            raise KeyError(f"{key} missing 'address' attribute.")
+        if "port" not in conn_info:
+            raise KeyError(f"{key} missing 'port' attribute.")
         return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))
 
     def decode_configuration(self) -> Configuration:
@@ -96,22 +107,24 @@ class ConfigManager:
 
         :return: An instance of Configuration
         """
-        cantabular_connection_info = self.decode_connection_info("Cantabular Connection Information")
-        cantabular_credentials = self.decode_credentials("Cantabular Credentials")
-        nomis_connection_info = self.decode_connection_info("Nomis Connection Information")
-        nomis_credentials = self.decode_credentials("Nomis Credentials")
-        nomis_metadata_connection_info = self.decode_connection_info("Nomis Metadata Connection Information")
-        nomis_metadata_credentials = self.decode_credentials("Nomis Metadata Credentials")
 
-        cantabular_connection_info.validate()
-        cantabular_credentials.validate()
-        nomis_connection_info.validate()
-        nomis_credentials.validate()
-        nomis_metadata_connection_info.validate()
-        nomis_metadata_credentials.validate()
+        # Establish the APIs included in the config file
+        api_config_details = [
+            # FORMAT: ("API Name", "Credentials key", "Connection info key"),
+            ("cantabular", "Cantabular Credentials", "Cantabular Connection Information"),
+            ("nomis", "Nomis Credentials", "Nomis Connection Information"),
+            ("nomis_metadata", "Nomis Metadata Credentials", "Nomis Metadata Connection Information")
+        ]
 
-        return Configuration(
-            cantabular_connection_info, cantabular_credentials,
-            nomis_connection_info, nomis_credentials,
-            nomis_metadata_connection_info, nomis_metadata_credentials
-        )
+        # Create a dictionary containing the names of the APIs as keys, and nametuples containing instances of
+        # Credentials and ConnectionInfo for each API as values; all as specified in the configurable list above
+        configurations = {
+            name.lower(): CredentialsConninfo(self.decode_credentials(creds), self.decode_connection_info(conn))
+            for name, creds, conn in api_config_details
+        }
+
+        for api in configurations:
+            configurations[api].credentials.validate()
+            configurations[api].connection_info.validate()
+
+        return Configuration(configurations)

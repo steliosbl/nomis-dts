@@ -1,8 +1,8 @@
-import requests
-from pyjstat import pyjstat
 from api_connector import ApiConnector
 from data_source import DataSource
 from logging import getLogger
+from pyjstat import pyjstat
+import requests
 logger = getLogger('DTS-Logger')
 
 

@@ -1,8 +1,8 @@
-from ipaddress import ip_address
 from urllib.parse import urlparse
-from socket import gethostbyname, gaierror
 from type_hints import *
+from ipaddress import ip_address
 from logging import getLogger
+from socket import gethostbyname, gaierror
 
 logger = getLogger("DTS-Logger")
 
@@ -21,7 +21,7 @@ class ConnectionInfo:
     address: str
     port: Union[str, int]
 
-    def __init__(self, address: str, port: Union[str, int]) -> None:
+    def __init__(self, address: str, port: Union[str, int, None]) -> None:
         self.address = address
         self.port = port
 
@@ -68,13 +68,16 @@ class ConnectionInfo:
                                      "the config file.")
         logger.info(f"The address {self.address} is valid.")
 
-        if not isinstance(self.port, str) and not isinstance(self.port, int):
+        if self.port is None:
+            logger.info("No port inputted.")
+        elif not isinstance(self.port, str) and not isinstance(self.port, int):
             raise TypeError("API connection information failed to validate; the port must be a valid integer or "
                             "numeric string. Please check the config file.")
         elif not 0 <= int(self.port) <= 49151:
             raise ValueError("API connection information failed to validate; port is out of range. Please check the "
                              "config file.")
-        self.port = str(self.port)
-        logger.info(f"Port {self.port} is valid.")
+        else:
+            self.port = str(self.port)
+            logger.info(f"Port {self.port} is valid.")
 
         return True

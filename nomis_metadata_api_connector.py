@@ -13,8 +13,7 @@ Metadata = Dict[str, Union[str, List[str]]]
 """
 INFO
 
-Some of the class methods will likely be removed as they are non-essential, but for the sake of testing I incorporated 
-methods for most of the requests that it is possible to make to the Nomis metadata server. The methods are as follows:
+
 """
 
 
@@ -179,7 +178,7 @@ class NomisMetadataApiConnector(ApiConnector):
             logger.info(f"ERROR: Unexpected error occurred when attempting to retrieve metadata by ID. ({str(e)})")
         return False
 
-    def add_new_metadata(self, metadata: Union[List[Metadata], Metadata], return_id: bool = True) -> Union[str, bool]:
+    def add_new_metadata(self, metadata: Union[List[Metadata]], return_uuids: bool = False) -> Union[List[str], bool]:
         """This takes an object representing an instance of Metadata (see the type definition above) and makes a POST
         request that adds this metadata to the server. This metadata is not required to have anything for its id: if it
         has no id then the API will generate a uuid for it automatically. If it does have an id, it must be in a valid
@@ -189,8 +188,10 @@ class NomisMetadataApiConnector(ApiConnector):
         check whether we will or won't overwrite anything by calling this method. This method returns the uuid of the
         metadata that was appended to the server.
 
-        metadata: Valid dictionary of strings representing metadata
-        return:   Bool indicating the success of the request
+        :param metadata: Valid list of dictionary of strings representing metadata
+        :param return_uuids: Toggle for returning uuids instead of a boolean confirmation - for testing purposes
+
+        :return: Bool indicating the success of the request, or the ids of the appended datasets if toggled for
         """
         # Establish headers
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -206,13 +207,16 @@ class NomisMetadataApiConnector(ApiConnector):
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
 
         # Handle response
-        if res.status_code == 201:
+        if res.status_code == 200:
             logger.info(f"SUCCESS: New metadata added successfully")
-            if return_id:
-                return res.json()["id"]
+            if return_uuids:
+                ids = []
+                for ds in res.json():
+                    ids.append(ds['id'])
+                return ids
             return True
         elif res.status_code == 400:
-            raise requests.HTTPError(f"Unable to add new metadata due to validation errors.")
+            raise requests.HTTPError(f"Unable to add new metadata due to validation errors. ({res.text})")
         elif res.status_code == 409:
             raise requests.HTTPError(f"ERROR: Unable to add new metadata due to conflict.")
         else:
@@ -225,9 +229,9 @@ class NomisMetadataApiConnector(ApiConnector):
         case it will only update the included fields upon making the request; however, the metadata must have a valid
         id, and this id must match the one passed to the method in the parameters.
 
-        id:       Valid string representing the ID of some metadata in the Nomis database
-        metadata: Valid dictionary of strings representing metadata attributes (must include belongsTo)
-        return:   Bool indicating the success of the request
+        :param id: Valid string representing the ID of some metadata in the Nomis database
+        :param metadata: Valid dictionary of strings representing metadata attributes (must include belongsTo)
+        return: Bool indicating the success of the request
         """
         # Establish headers
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}

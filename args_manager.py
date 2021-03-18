@@ -1,6 +1,7 @@
 from type_hints import *
 from arguments import Arguments
 import argparse
+import sys
 
 
 class ArgsManager:
@@ -14,13 +15,27 @@ class ArgsManager:
         self.parser = argparse.ArgumentParser(
             description='Data Transformation Service Census 2021'
         )
-
+        self.parser.add_argument(
+            "metadata",
+            action='store',
+            help='Toggle metadata mode.',
+            type=str,
+        )
         self.parser.add_argument(
             '-f',
             '--filename',
             action="store",
-            help="read data from a file instead of querying cantabular",
+            help="Read data from a file instead of querying cantabular.",
             dest='filename',
+            type=str,
+            default=None
+        )
+        self.parser.add_argument(
+            '-r',
+            '--metadata-format',
+            action="store",
+            help="The format of the metadata E.g. 'C' ~ CANTABULAR, 'O' ~ ONS",
+            dest='metadata_format',
             type=str,
             default=None
         )
@@ -97,7 +112,7 @@ class ArgsManager:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         pass
 
-    def get_args(self) -> 'Arguments':
+    def decode_arguments(self) -> 'Arguments':
         """Method for decoding the arguments collected by the parser into an instance of :class:Arguments, and then
         calling the :class:Arguments validate() method.
 
