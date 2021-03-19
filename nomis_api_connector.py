@@ -1,21 +1,64 @@
+from api_connector import ApiConnector
+from file_reader import FileReader
+from type_hints import *
+from datetime import datetime
+from logging import getLogger
+from pprint import pformat
+from uuid import UUID
 import requests
 import json
-from type_hints import *
-from uuid import UUID
-from api_connector import ApiConnector
-from logging import getLogger
+import os
+
 logger = getLogger('DTS-Logger')
 
-
-requests.packages.urllib3.disable_warnings() 
+requests.packages.urllib3.disable_warnings()
 
 
 class NomisApiConnector(ApiConnector):
     """API Connector class for communicating with Nomis' main API. Provides the functionality of appending and altering
     datasets and variables on the Nomis database through the Nomis API.
     """
+
     def __init__(self, credentials, address, port=None) -> None:
         super().__init__(credentials, address, port)
+        self.this_instance = str(datetime.now().strftime("%Y%m%d-%H%M%S"))
+
+    def save_request(self, method: str, res: Union[requests.Response, None]) -> None:
+        """Method for saving requests and their responses to its own file
+
+        :param method: The connector method within which the request was made
+        :param res: The response received by the system
+        """
+        if res is None:
+            request = "N/A"
+            response = "N/A"
+        else:
+            request = "N/A" if res.request.body is None else json.dumps(json.loads(res.request.body), indent=4)
+            try:
+                response = json.dumps(res.json(), indent=4)
+            except json.decoder.JSONDecodeError:
+                response = "N/A"
+
+        responses_directory = os.path.join('responses')
+        if not os.path.exists(responses_directory):
+            os.mkdir(responses_directory)
+
+        this_response_directory = f'{responses_directory}/{self.this_instance}'
+        if not os.path.exists(this_response_directory):
+            os.mkdir(this_response_directory)
+
+        file = f'{this_response_directory}/{datetime.now().strftime("%Y%m%d-%H%M%S")}_{method}.txt'
+        file_data = '{}\n\n{}\n{}\n\nResponse Status Code: {}\n\nRequest Body: \n{}\n\nResponse Body: \n{}'.format(
+                f'--------------------{method}--------------------',
+                res.request.method + ' at ' + res.request.url,
+                '\n'.join('{}: {}'.format(k, v) for k, v in res.headers.items()),
+                res.status_code,
+                request,
+                response
+        )
+
+        with FileReader(file) as fr:
+            fr.write_text_file(file_data)
 
     @staticmethod
     def validate_ds(ds: NomisDataset, id: str = None) -> bool:
@@ -134,6 +177,8 @@ class NomisApiConnector(ApiConnector):
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
 
+        self.save_request("get_dataset()", res)
+
         # Handle response
         # If the dataset exists, the response code will be 200; other responses correspond to the API documentation.
         if res.status_code == 200:
@@ -188,6 +233,8 @@ class NomisApiConnector(ApiConnector):
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
 
+        self.save_request("create_dataset()", res)
+
         # Handle response
         if res.status_code == 200:
             logger.info("Dataset created successfully.")
@@ -226,6 +273,8 @@ class NomisApiConnector(ApiConnector):
             )
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("get_dataset_dimensions()", res)
 
         # Handle response
         if res.status_code == 200:
@@ -272,6 +321,8 @@ class NomisApiConnector(ApiConnector):
             )
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("assign_dimensions_to_dataset()", res)
 
         # Handle response
         if res.status_code == 200:
@@ -321,6 +372,8 @@ class NomisApiConnector(ApiConnector):
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
 
+        self.save_request("append_dataset_observations()", res)
+
         # Handle response
         if res.status_code == 200:
             logger.info("Observations appended successfully.")
@@ -365,6 +418,8 @@ class NomisApiConnector(ApiConnector):
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
 
+        self.save_request("overwrite_dataset_observations()", res)
+
         # Handle response
         if res.status_code == 200:
             logger.info("Observations replaced successfully.")
@@ -405,6 +460,8 @@ class NomisApiConnector(ApiConnector):
             )
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("get_variable()", res)
 
         # Handle response
         if res.status_code == 200:
@@ -451,6 +508,8 @@ class NomisApiConnector(ApiConnector):
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
 
+        self.save_request("create_variable()", res)
+
         # Handle response
         if res.status_code == 200:
             logger.info(f"Variable (name: '{name}') created successfully.")
@@ -486,6 +545,8 @@ class NomisApiConnector(ApiConnector):
             )
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("get_variable_categories()", res)
 
         # Handle response
         if res.status_code == 200:
@@ -528,6 +589,8 @@ class NomisApiConnector(ApiConnector):
             )
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("create_variable_category()", res)
 
         # Handle response
         if res.status_code == 200:
@@ -578,6 +641,8 @@ class NomisApiConnector(ApiConnector):
             )
         except Exception as e:
             raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("update_variable_category()", res)
 
         # Handle response
         if res.status_code == 200:

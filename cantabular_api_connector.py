@@ -34,7 +34,7 @@ class CantabularApiConnector(ApiConnector, DataSource):
         # Check for an errored response. This may occur if the query contained invalid values, or if the entire output
         # table was blocked for disclosure control reasons.
         if not res.ok:
-            raise requests.HTTPError(f'HTTP error: {res.content}')
+            raise requests.HTTPError(f'Bad response from the Cantabular server, it may be down. ({res.content})')
 
         # Load response into a pyjstat dataframe.
         return self.load_jsonstat(res.content.decode('utf-8'))

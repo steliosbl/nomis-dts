@@ -1,7 +1,6 @@
 from type_hints import *
 from arguments import Arguments
 import argparse
-import sys
 
 
 class ArgsManager:
@@ -17,7 +16,7 @@ class ArgsManager:
             description='Data Transformation Service Census 2021'
         )
         self.parser.add_argument(
-            "metadata",
+            "transformation",
             action='store',
             help='Toggle metadata mode.',
             type=str,

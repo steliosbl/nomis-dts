@@ -43,7 +43,8 @@ class Arguments:
     config_file: Union[str, None]
 
     def __init__(self, arguments: argparse.Namespace) -> None:
-        self.metadata = arguments.metadata
+        self.transformation = arguments.transformation
+        self.metadata = False
         self.metadata_format = arguments.metadata_format
         self.filename = arguments.filename
         self.query_variables = arguments.query_variables
@@ -64,9 +65,9 @@ class Arguments:
         :raises IOError: If the arguments for filename or config_file aren't .json, or log_file isn't .log
         """
         # Resolve metadata
-        if self.metadata == 'metadata':
+        if self.transformation == 'metadata':
             self.metadata = True
-        elif self.metadata == 'data':
+        elif self.transformation == 'data':
             self.metadata = False
         else:
             raise ValueError("Program only supports 'data' or 'metadata' modes.")

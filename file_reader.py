@@ -43,3 +43,9 @@ class FileReader:
         """
         with open(self.file, 'w') as f:
             json.dump(to_write, f, indent=2)
+
+    def write_text_file(self, to_write: str) -> None:
+        """Write out a text file
+        """
+        with open(self.file, 'w') as f:
+            f.write(to_write)

@@ -9,6 +9,7 @@ class TestArgsManager(unittest.TestCase):
     def test_valid_args(self):
         args = [
             'prog',
+            'data',
             '-q', 'COUNTRY, SEX',
             '-d', 'Usual-Residents',
             '-i', 'DC1101EW',
@@ -28,6 +29,7 @@ class TestArgsManager(unittest.TestCase):
     def test_args_existing_files(self):
         args = [
             'prog',
+            'data',
             '-f', 'test_config.json',
             '-c', 'test_config.json',
             '-i', 'DC1101EW',
