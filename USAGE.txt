@@ -1,0 +1,98 @@
+~~~ DATA TRANSFORMATION SERVICE CENSUS 2021 ~~~
+
+### USAGE ###
+
+	## HELP ##
+
+		main.py TRANSFORMATION [-h] [-f FILENAME] [-r METADATA_FORMAT]
+	            [-q--query-variables QUERY_VARIABLES] [-i DATASET_ID]
+	            [-t DATASET_TITLE] [-d QUERY_DATASET] [-y] [-v]
+	            [-c CONFIG_FILE] [-l LOG_FILE]     
+
+		positional arguments:
+		  TRANSFORMATION        Toggle data/metadata mode E.g. "data".
+
+		optional arguments:
+		  -h, --help            show this help message and exit
+
+		  -f FILENAME, --filename FILENAME
+		                        Read data from a file instead of querying cantabular.
+
+		  -r METADATA_FORMAT, --metadata-format METADATA_FORMAT
+		                        The format of the metadata E.g. 'C' ~ CANTABULAR, 'O' ~ ONS
+
+		  -q QUERY_VARIABLES, --query-variables QUERY_VARIABLES
+		                        delimited list input e.g. "COUNTRY, SEX"
+
+		  -i DATASET_ID, --dataset-id DATASET_ID
+		                        nomis dataset ID e.g 'syn123'
+
+		  -t DATASET_TITLE, --dataset-title DATASET_TITLE
+		                        nomis dataset title e.g "TEST 1"
+
+		  -d QUERY_DATASET, --query-dataset QUERY_DATASET
+		                        the census dataset e.g. "Usual-Residents"
+
+		  -y, --suppress-prompts
+		                        suppresses all (y/n) prompts and automatically responds yes
+		  -v, --verbose         
+		  						verbose
+
+		  -c CONFIG_FILE, --config-file CONFIG_FILE
+		                        path for non-default config file
+
+		  -l LOG_FILE, --log-file LOG_FILE
+		                        path for non-default config file
+	
+
+	## DATA ##
+
+		# CREATING A NEW DATASET #
+			FILE:
+				main.py data -i DATASET_ID -t DATASET_TITLE -f FILENAME
+
+				EXAMPLE:
+					main.py data -i "SYN123" -t "CENSUS TEST 1" -f "cantabular_query_example.json"
+
+			CANTABULAR API:
+
+				main.py data -q QUERY_VARIABLES -i DATASET_ID -t DATASET_TITLE -d QUERY_DATASET
+
+				EXAMPLE:
+					main.py data -q "SEX, AGE" -i "SYN123" -t "CENSUS TEST 1" -d "Usual-Residents"
+
+
+		# UPDATING A CURRENT DATASET #
+			FILE:
+
+				main.py data -i DATASET_ID -f FILENAME
+
+				EXAMPLE:
+					main.py data -i "SYN123" -f "cantabular_query_example.json"
+
+			CANTABULAR API:
+
+				main.py data -q QUERY_VARIABLES -i DATASET_ID -d QUERY_DATASET
+
+				EXAMPLE:
+					main.py data -q "SEX, AGE" -i "SYN123" -d "Usual-Residents"
+
+
+	## METADATA ##
+
+		# ASSIGNING VARIABLE METADATA #
+
+			ONS FORMAT:
+
+				main.py metadata -f FILENAME -r METADATA_FORMAT
+
+				EXAMPLE:
+					main.py metadata -f "Census2011-OU codebook.json" -r "O"
+
+			CANTABULAR FORMAT:
+
+				main.py metadata -f FILENAME -r METADATA_FORMAT
+
+				EXAMPLE:
+					main.py metadata -f "cantabular_metadata_example.json" -r "C"
+
