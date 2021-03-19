@@ -46,8 +46,8 @@ class DatasetTransformations:
         ds = {
             "id": dataset_id,
             "title": dataset_title,
-            "contactId": None,
-            "isAdditive": False,
+            "contactId": "Census",
+            "isAdditive": True,
             "isFlagged": False,
             "derivedFrom": None,
             "restrictedAccess": False,
