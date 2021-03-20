@@ -71,11 +71,34 @@ class DatasetTransformations:
             for dimension in self.table["dimension"]]
         return requests
 
-    def category_creation(self) -> List[Variables]:
+    def type_creation(self) -> List[Variables]:
+        """Method for creating a valid variable type using the pyjstat dataframe  for communication
+        with the Nomis API
+
+        :raises KeyError: If the dataframe doesn't contain any dimension information
+        :return: A list of types (should usually be a single dictionary inside of a list)
+        """
+        requests = []
+        for dimension in self.table["dimension"]:
+            requests.append(
+                {
+                    "id": "1000000",
+                    "reference": dimension,
+                    "title": self.table["dimension"][dimension]["label"],
+                    "titlePlural": self.table["dimension"][dimension]["label"],
+                }           
+            )
+        return requests
+
+    def category_creation(self, type_ids) -> List[Variables]:
         """Method for constructing a list of variable categories, using the jsonstat table retrieved from cantabular
         :return: A list of variable categories
         """
+        if not isinstance(type_ids, list):
+            raise TypeError("Invalid type_ids param, must be a list.")
+
         requests = []
+        counter = 0
         for dimension in self.table["dimension"]:
             for label in self.table["dimension"][dimension]["category"]["label"]:
                 requests.append(
@@ -83,13 +106,14 @@ class DatasetTransformations:
                         "code": label,
                         "title": self.table["dimension"][dimension]["category"]["label"][label],
                         "ancestors": None,
-                        "typeId": None,
+                        "typeId": type_ids[counter],
                         "validity": {
                             "select": True,
                             "make": False
                         }
                     }
                 )
+            counter += 1
         return requests
 
     def assign_dimensions(self) -> List[Dimensions]:
@@ -107,7 +131,7 @@ class DatasetTransformations:
             },
             "role": "Measures",
             "canFilter": True,
-            "defaults": self.table["dimension"][dimension]["category"]["index"],
+            "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
             "database": {
                 "isKey": False,
                 "index": 0,

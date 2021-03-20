@@ -612,3 +612,93 @@ class NomisApiConnector(ApiConnector):
             raise requests.HTTPError(f"Variable (name: '{name}') not found.")
         else:
             raise Exception(f"Unexpected response with status code {res.status_code}.")
+
+    # PUT | VARIABLE-ADMIN
+    def create_variable_type(self, name: str, type_arr: list) -> bool:
+        """Method for adding variable types to a variable in the dataset.
+
+        :param name: Unique name of the variable.
+        :param type_arr: Array of dimension types.
+
+        :raises TypeError: If the name param is not a string, or the type_arr param is not a valid list of types.
+        :raises ValueError: If the name param is not in a valid format.
+        :raises requests.HTTPError: if either connecting to the API is unsuccessful or a negative response is received.
+
+        :return: True will be returned upon a successful request; an appropriate error will be raised otherwise.
+        """
+        #  Validation
+        if not isinstance(name, str):
+            raise TypeError("Invalid name, must be a string.")
+        elif not isinstance(type_arr, list):
+            raise TypeError("Invalid variable type array.")
+
+        # Make request: Add types to variable.
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        try:
+            res = self.session.put(
+                f'{self.client}/Variables/{name}/types',
+                data=json.dumps(type_arr),
+                headers=headers,
+                verify=False
+            )
+        except Exception as e:
+            raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("create_variable_type()", res)
+
+        # Handle response
+        if res.status_code == 200:
+            logger.info(f"Variable types created successfully for variable '{name}'.")
+            return True
+        elif res.status_code == 400:
+            raise requests.HTTPError("Bad input parameters.")
+        elif res.status_code == 404:
+            raise requests.HTTPError(f"Variable (name: '{name}') not found.")
+        else:
+            raise Exception(f"Unexpected response with status code {res.status_code}.")
+
+    # PUT | VARIABLE-ADMIN
+    def update_variable_type(self, variable_id: str, type_id: str, var_type: dict) -> bool:
+        """Method for updating a variable type for a variable in the dataset.
+
+        :param name: Unique name of the variable.
+        :param var_type: dimension type.
+
+        :raises TypeError: If the variable_id param is not a string, or the var_type param is not a valid dict, or the type_id param is not a string.
+        :raises ValueError: If the variable_id or type_id param is not in a valid format.
+        :raises requests.HTTPError: if either connecting to the API is unsuccessful or a negative response is received.
+
+        :return: True will be returned upon a successful request; an appropriate error will be raised otherwise.
+        """
+        #  Validation
+        if not isinstance(variable_id, str):
+            raise TypeError("Invalid variable_id, must be a string.")
+        if not isinstance(type_id, str):
+            raise TypeError("Invalid type_id, must be a string.")
+        elif not isinstance(var_type, dict):
+            raise TypeError("Invalid variable type.")
+
+        # Make request: Add type to variable.
+        headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
+        try:
+            res = self.session.put(
+                f'{self.client}/Variables/{variable_id}/types/{type_id}',
+                data=json.dumps(var_type),
+                headers=headers,
+                verify=False
+            )
+        except Exception as e:
+            raise requests.ConnectionError(f"Unable to connect to client. ({e})")
+
+        self.save_request("update_variable_type()", res)
+
+        # Handle response
+        if res.status_code == 200:
+            logger.info(f"Variable types created successfully for variable '{variable_id}'.")
+            return True
+        elif res.status_code == 400:
+            raise requests.HTTPError("Bad input parameters.")
+        elif res.status_code == 404:
+            raise requests.HTTPError(f"Variable (name: '{variable_id}') not found.")
+        else:
+            raise Exception(f"Unexpected response with status code {res.status_code}.")

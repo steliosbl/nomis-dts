@@ -113,6 +113,15 @@ def get_non_assigned_variables(connector: NomisApiConnector
 
     return non_assigned_variables
 
+def get_type_ids(type_requests) -> List[str]:
+    """Obtain a list of all unique type ID
+    """
+
+    type_ids = []
+    for request in type_requests:
+        type_ids.append(request["id"])
+
+    return type_ids
 
 def create_dataset(connector: NomisApiConnector,
                    transformations: DatasetTransformations
@@ -139,7 +148,9 @@ def handle_variables(connector: NomisApiConnector,
 
     # Create the variable creation and category request bodies
     variable_request_body = transformations.variable_creation()
-    category_request_body = transformations.category_creation()
+    type_request_body = transformations.type_creation()
+    type_ids = get_type_ids(type_request_body)
+    category_request_body = transformations.category_creation(type_ids)
 
     for variable in variables:
 
@@ -150,6 +161,13 @@ def handle_variables(connector: NomisApiConnector,
             for request in variable_request_body:
                 if request["name"] == variable:
                     connector.create_variable(variable, request)
+
+            # Create variable type
+            requests = []
+            for request in type_request_body:
+                if request["reference"] == variable:
+                    requests.append(request)
+            connector.create_variable_type(variable, requests)
 
             # Create the categories for this new variable
             requests = []
