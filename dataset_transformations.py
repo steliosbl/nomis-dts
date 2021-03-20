@@ -116,30 +116,44 @@ class DatasetTransformations:
             counter += 1
         return requests
 
-    def assign_dimensions(self) -> List[Dimensions]:
+    def assign_dimensions(self, key) -> List[Dimensions]:
         """Method for using the jsonstat table to construct a list of dimensions, based on the initial query to
         cantabular
         :return: A list of dataset dimensions
         """
-        requests = [{
-            "name": dimension,
-            "label": self.table["dimension"][dimension]["label"],
-            "isAdditive": True,
-            "variable": {
-                "name": dimension,
-                "view": None
-            },
-            "role": "Measures",
-            "canFilter": True,
-            "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
-            "database": {
-                "isKey": False,
-                "index": 0,
-                "defaultView": None,
-                "discontinuities": None
-            },
-        }
-            for dimension in self.table["dimension"]]
+
+        if not isinstance(key, str):
+            raise TypeError("Invalid key param, must be a string.")
+
+        requests = []
+        index = 0
+        for dimension in self.table["dimension"]:
+            if dimension == key:
+                isKey = True
+            else:
+                is_key = False
+            requests.append(
+                {
+                    "name": dimension,
+                    "label": self.table["dimension"][dimension]["label"],
+                    "isAdditive": True,
+                    "variable": {
+                        "name": dimension,
+                        "view": None
+                    },
+                    "role": "Measures",
+                    "canFilter": True,
+                    "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
+                    "database": {
+                        "isKey": is_key,
+                        "index": index,
+                        "defaultView": None,
+                        "discontinuities": None
+                    },
+                }
+            )
+            index += 1
+            
         return requests
 
     def observations(self, dataset_id: str) -> Observations:
