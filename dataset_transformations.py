@@ -203,9 +203,8 @@ class DatasetTransformations:
         for dimension in data["dimension"]:
             if counter == 0:
                 dimensions.append("geography")
-                livefix = data["dimension"][dimension]["category"]["index"]
-                if livefix.startswith("syn"):
-                    livefix = livefix[3:]
+                sub = data["dimension"][dimension]["category"]["index"]
+                livefix = list(map(lambda live: live[3:] if live.startswith("syn") else live, sub))
                 codes.append(livefix)
                 counter += 1
                 continue
