@@ -266,7 +266,7 @@ def cantabular_metadata(file_data: dict) -> List[UuidMetadata]:
 
     # Extract variable IDs
     data = [meta["meta"] for meta in file_data["vars"]]
-    variables = [meta["id"] for meta in file_data["vars"]]
+    variables = [meta["name"] for meta in file_data["vars"]]
     uuids_metadata: List[UuidMetadata] = []
 
     # Get UUIDs from Nomis
