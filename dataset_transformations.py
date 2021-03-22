@@ -203,7 +203,10 @@ class DatasetTransformations:
         for dimension in data["dimension"]:
             if counter == 0:
                 dimensions.append("geography")
-                codes.append(data["dimension"][dimension]["category"]["index"])
+                livefix = data["dimension"][dimension]["category"]["index"]
+                if livefix.startswith("syn"):
+                    livefix = livefix[3:]
+                codes.append(livefix)
                 counter += 1
                 continue
 
