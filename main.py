@@ -12,6 +12,7 @@ from arguments import Arguments
 from pyjstat import pyjstat
 import logging
 import sys
+import copy
 
 # ---------- Initialisation ---------- #
 
@@ -100,18 +101,22 @@ def retrieve_data() -> Tuple[pyjstat.Dataset, List[str]]:
     return table, variables
 
 
-def get_non_assigned_variables(connector: NomisApiConnector
-                               ) -> List[str]:
+def check_dataset_dimensions(connector: NomisApiConnector,
+                             dimensions: list
+                            ) -> List[str]:
     """Obtain a list of all variables marked for posting that haven't already been assigned to the dataset
     """
 
     assigned_variables_json = connector.get_dataset_dimensions(args.dataset_id)
     assigned_variables = [assigned_variables_json[i]['name'] for i in range(len(assigned_variables_json))]
 
-    # Check to see if any of the variables in the observation request
-    non_assigned_variables = [variable for variable in args.query_variables if variable not in assigned_variables]
+    if "geography" in assigned_variables:
+        assigned_variables.remove("geography")
 
-    return non_assigned_variables
+    if dimensions == assigned_variables:
+        return True
+
+    return False
 
 def get_type_ids(type_requests) -> List[str]:
     """Obtain a list of all unique type ID
@@ -182,7 +187,8 @@ def handle_variables(connector: NomisApiConnector,
 
 # Assign dimensions to dataset
 def handle_dimensions(connector: NomisApiConnector,
-                      transformations: DatasetTransformations
+                      transformations: DatasetTransformations,
+                      key: str,
                       ) -> None:
     """Assign dimensions to the dataset
     """
@@ -190,13 +196,13 @@ def handle_dimensions(connector: NomisApiConnector,
     logger.info("\n-----ASSIGNING DIMENSIONS-----")
     connector.assign_dimensions_to_dataset(
         args.dataset_id,
-        transformations.assign_dimensions()
+        transformations.assign_dimensions(key)
     )
 
 
 # Append observations into dataset
 def handle_observations(connector: NomisApiConnector,
-                        transformations: DatasetTransformations
+                        transformations: DatasetTransformations,
                         ) -> None:
     """Append/overwrite observations to the dataset
     """
@@ -216,19 +222,38 @@ def dataset_transformations(connector: NomisApiConnector,
     """
 
     table, variables = data
-    transformations = DatasetTransformations(table)
+
+    # Check variables against known geographies. If geography then remove from list and make key.
+    geography_variables = config.get_geography()
+
+    geography_flag = False
+    table_geography = None
+    for variable in variables:
+        if variable in geography_variables:
+            geography_flag = True
+            key = variable
+            table_geography = copy.deepcopy(table)
+            del table["dimension"][variable]
+            table["id"].remove(variable)
+            variables.remove(variable)
+
+    # If no variables are geography then make first variable key
+    if geography_flag is False:
+        key = variables[0]
+
+    transformations = DatasetTransformations(geography_flag, table, table_geography)
 
     # Create the dataset if it doesn't exist, otherwise retrieve the non-assigned variables
     if not exists:
         non_assigned_variables = variables
         create_dataset(connector, transformations)
+        handle_variables(connector, transformations, non_assigned_variables)
     else:
-        non_assigned_variables = get_non_assigned_variables(connector)
+        are_dimensions_same = check_dataset_dimensions(connector, variables)
+        if are_dimensions_same is False:
+            raise KeyError("ERROR: Dimensions are not the same as existing dataset.")
 
-    # Create any new variables and assign all non assigned variables to the dataset
-    if len(non_assigned_variables) > 0:
-        handle_variables(connector, transformations, variables)
-    handle_dimensions(connector, transformations)
+    handle_dimensions(connector, transformations, key)
     handle_observations(connector, transformations)
 
 

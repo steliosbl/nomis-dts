@@ -29,6 +29,17 @@ DEFAULT_CONFIG_FILE = '''
   "Nomis Metadata Connection Information": {
     "address": "https://localhost",
     "port": "5001"
-  }
+  },
+  "Geography Variables": [
+    "OA",
+    "LSOA",
+    "MSOA",
+    "LA",
+    "MERGED_LA",
+    "REGION",
+    "COUNTRY",
+    "Region",
+    "Country"
+  ]
 }
 '''

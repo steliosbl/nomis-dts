@@ -9,9 +9,13 @@ class DatasetTransformations:
     :ivar table: initial value: table
     """
 
-    def __init__(self, table: pyjstat.Dataset = None):
+    def __init__(self, geography_flag: bool, table: pyjstat.Dataset = None, table_geography: pyjstat.Dataset = None):
         self.table = table
+        self.geography_flag = geography_flag
+        self.table_geography = table_geography
         self.validate_table()
+
+
 
     def validate_table(self):
         """Method for validating the table, ensuring it is of the correct type and contains sufficient keys
@@ -116,20 +120,40 @@ class DatasetTransformations:
             counter += 1
         return requests
 
-    def assign_dimensions(self, key) -> List[Dimensions]:
+    def assign_dimensions(self, key: str) -> List[Dimensions]:
         """Method for using the jsonstat table to construct a list of dimensions, based on the initial query to
         cantabular
         :return: A list of dataset dimensions
         """
 
-        if not isinstance(key, str):
-            raise TypeError("Invalid key param, must be a string.")
-
         requests = []
         index = 0
+        if self.geography_flag is True:
+            requests.append(
+                {
+                    "name": "geography",
+                    "label": "geography",
+                    "isAdditive": True,
+                    "variable": {
+                        "name": "geography",
+                        "view": None
+                    },
+                    "role": "Spatial",
+                    "canFilter": True,
+                    "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
+                    "database": {
+                        "isKey": True,
+                        "index": index,
+                        "defaultView": None,
+                        "discontinuities": None
+                    },
+                }
+            )
+            index += 1            
+
         for dimension in self.table["dimension"]:
             if dimension == key:
-                isKey = True
+                is_key = True
             else:
                 is_key = False
             requests.append(
@@ -143,7 +167,7 @@ class DatasetTransformations:
                     },
                     "role": "Measures",
                     "canFilter": True,
-                    "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
+                    "defaults": None,
                     "database": {
                         "isKey": is_key,
                         "index": index,
@@ -167,19 +191,31 @@ class DatasetTransformations:
         if len(dataset_id) == 0:
             raise ValueError(f"The dataset id must not be empty.")
 
+        if self.table_geography is None:
+            data = self.table
+        else:
+            data = self.table_geography
+
         dimensions = []
         codes = []
 
-        for dimension in self.table["dimension"]:
+        counter = 0
+        for dimension in data["dimension"]:
+            if counter == 0:
+                dimensions.append("geography")
+                codes.append(data["dimension"][dimension]["category"]["index"])
+                counter += 1
+                continue
+
             dimensions.append(dimension)
-            codes.append(self.table["dimension"][dimension]["category"]["index"])
+            codes.append(data["dimension"][dimension]["category"]["index"])
 
         return (
             {
                 "dataset": dataset_id,
                 "dimensions": dimensions,
                 "codes": codes,
-                "values": self.table["value"],
+                "values": data["value"],
                 "statuses": None
             }
         )
