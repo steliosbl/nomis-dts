@@ -165,7 +165,7 @@ class DatasetTransformations:
                         "name": dimension,
                         "view": None
                     },
-                    "role": "Measures",
+                    "role": "Normal",
                     "canFilter": True,
                     "defaults": None,
                     "database": {
