@@ -129,7 +129,25 @@ class DatasetTransformations:
         requests = []
         index = 0
         if self.geography_flag is True:
-            requests.append(
+            requests += [
+                {
+                    "name": "date",
+                    "label": "date",
+                    "isAdditive": True,
+                    "variable": {
+                        "name": "date",
+                        "view": None
+                    },
+                    "role": "Temporal",
+                    "canFilter": True,
+                    "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
+                    "database": {
+                        "isKey": True,
+                        "index": index,
+                        "defaultView": None,
+                        "discontinuities": None
+                    },
+                },
                 {
                     "name": "geography",
                     "label": "geography",
@@ -143,13 +161,13 @@ class DatasetTransformations:
                     "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
                     "database": {
                         "isKey": True,
-                        "index": index,
+                        "index": index+1,
                         "defaultView": None,
                         "discontinuities": None
                     },
                 }
-            )
-            index += 1            
+            ]
+            index += 2           
 
         for dimension in self.table["dimension"]:
             if dimension == key:
@@ -199,9 +217,13 @@ class DatasetTransformations:
         dimensions = []
         codes = []
 
+        if self.geography_flag:
+            dimensions.append("date")
+            codes.append(["2021"])
+
         counter = 0
         for dimension in data["dimension"]:
-            if counter == 0:
+            if counter == 0 and self.geography_flag:
                 dimensions.append("geography")
                 sub = data["dimension"][dimension]["category"]["index"]
                 livefix = list(map(lambda live: live[3:] if live.startswith("syn") else live, sub))
