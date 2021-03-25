@@ -31,7 +31,7 @@ To install them automatically, run:
 `pip install -r requirements.txt`
 
 ### Nomis APIs
-The Nomis Data API and Metadata API must be available for the program to work. To compile and run the Data API, make sure you have `dotnet` installed. Navigate to the Nomis API directory and run the following commands):
+The Nomis Data API and Metadata API must be available for the program to work. To compile and run the Data API, make sure you have `dotnet` installed. Navigate to the [`mock-apis`](https://github.com/stelioslogothetis/nomis-dts/tree/submission/mock-apis) directory, then to [`nomis-api-v0.0.5-metadata-v0.0.2`](https://github.com/stelioslogothetis/nomis-dts/tree/submission/mock-apis/nomis-api-v0.0.5-metadata-v0.0.2) if running on Windows or Linux, or the [`__MACOSX/nomis-api-v0.0.5-metadata-v0.0.2`](https://github.com/stelioslogothetis/nomis-dts/tree/submission/mock-apis/__MACOSX/nomis-api-v0.0.5-metadata-v0.0.2) directory if running on Mac. Then run the following commands):
 
 ```
 cd fe-api
@@ -64,13 +64,13 @@ Full instructions can be found in the [`USAGE.txt`](https://github.com/stelioslo
 `python main.py data -i "SYN123" -t "CENSUS TEST 1" -f "examples/cantabular_query_example.json"`
 
 #### Importing a dataset from Cantabular
-`python main.py data -q "SEX, AGE" -i "SYN123" -t "CENSUS TEST 1" -d "Usual-Residents"`
+`python main.py data -q "SEX, AGE" -i "SYN456" -t "CENSUS TEST 2" -d "Usual-Residents"`
 
 #### Updating a dataset from a file
 `python main.py data -i "SYN123" -f "examples/cantabular_query_example.json"`
 
 #### Updating a dataset from Cantabular
-`python main.py data -q "SEX, AGE" -i "SYN123" -d "Usual-Residents"`
+`python main.py data -q "SEX" -i "SYN123" -d "Usual-Residents"`
 
 #### Importing ONS-formatted metadata
 `python main.py metadata -f "examples/ons_metadata_example.json" -r "O"`
@@ -78,5 +78,18 @@ Full instructions can be found in the [`USAGE.txt`](https://github.com/stelioslo
 #### Importing Cantabular-formatted metadata
 `python main.py metadata -f "examples/cantabular_metadata_example.json" -r "C"`
 
+## Viewing Imported Data with Mock Servers
 
+With the mock Data and Metadata APIs running, you can view a Swagger Interface for each API by going to:
 
+```
+http://localhost:[PORT]/swagger
+```
+
+So with the pre-configured ports these UIs will be available at:
+```
+http://localhost:5001/swagger
+http://localhost:5005/swagger
+```
+
+From there you can perform GET-requests to verify that the imports performed by the DTS were successful.
