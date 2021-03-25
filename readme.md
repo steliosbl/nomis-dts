@@ -9,11 +9,10 @@ This repository contains
 
  - The source code for the utility
  - A suite of unit tests ([`/tests`](https://github.com/stelioslogothetis/nomis-dts/tree/master/tests "tests"))
- - The user manual, maintenance guide, and code reference ([`docs/manual.pdf`](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf))
+ - Example dataset and metadata sets ([`/examples`](https://github.com/stelioslogothetis/nomis-dts/blob/master/examples))
+ - The user manual, maintenance guide, and code reference ([`/docs/manual.pdf`](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf))
+ - Example commands ([`USAGE.txt`](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/USAGE.txt "USAGE.txt"))
  - Example config file ([`config.json`](https://github.com/stelioslogothetis/nomis-dts/blob/master/config.json "config.json"))
- - Example commands ([`USAGE.txt`](https://github.com/stelioslogothetis/nomis-dts/blob/master/USAGE.txt "USAGE.txt"))
- - Example metadata sets ([`Census2011-OU codebook.json`](https://github.com/stelioslogothetis/nomis-dts/blob/master/Census2011-OU%20codebook.json "Census2011-OU codebook.json"), [`cantabular_metadata_example.json`](https://github.com/stelioslogothetis/nomis-dts/blob/master/cantabular_metadata_example.json "cantabular_metadata_example.json"))
- - An example dataset file ([`cantabular_query_example.json`](https://github.com/stelioslogothetis/nomis-dts/blob/master/cantabular_query_example.json "cantabular_query_example.json"))
  - Pip dependencies file ([`requirements.txt`](https://github.com/stelioslogothetis/nomis-dts/blob/master/requirements.txt "requirements.txt"))
 
 ## Branches
@@ -51,28 +50,28 @@ For transforming datasets, only the Data API must be running. For transforming m
 The `config.json` already contains connection information and credentials for the Cantabular API, as well as connection information for the mock Nomis APIs. To change any of this, please refer to the [manual](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf).
 
 # Running the Utility
-Full instructions can be found in the [`USAGE.txt`](https://github.com/stelioslogothetis/nomis-dts/blob/master/USAGE.txt "USAGE.txt") and in the [manual](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf)
+Full instructions can be found in the [`USAGE.txt`](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/USAGE.txt "USAGE.txt") and in the [manual](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf)
 
 ## Example Commands
 
 
 #### Importing a dataset from a file
-`python main.py data -i "SYN123" -t "CENSUS TEST 1" -f "cantabular_query_example.json"`
+`python main.py data -i "SYN123" -t "CENSUS TEST 1" -f "examples/cantabular_query_example.json"`
 
 #### Importing a dataset from Cantabular
 `python main.py data -q "SEX, AGE" -i "SYN123" -t "CENSUS TEST 1" -d "Usual-Residents"`
 
 #### Updating a dataset from a file
-`python main.py data -i "SYN123" -f "cantabular_query_example.json"`
+`python main.py data -i "SYN123" -f "examples/cantabular_query_example.json"`
 
 #### Updating a dataset from Cantabular
 `python main.py data -q "SEX, AGE" -i "SYN123" -d "Usual-Residents"`
 
 #### Importing ONS-formatted metadata
-`python main.py metadata -f "Census2011-OU codebook.json" -r "O"`
+`python main.py metadata -f "examples/ons_metadata_example.json" -r "O"`
 
 #### Importing Cantabular-formatted metadata
-`python main.py metadata -f "cantabular_metadata_example.json" -r "C"`
+`python main.py metadata -f "examples/cantabular_metadata_example.json" -r "C"`
 
 
 

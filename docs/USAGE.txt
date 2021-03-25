@@ -52,7 +52,7 @@
 				main.py data -i DATASET_ID -t DATASET_TITLE -f FILENAME
 
 				EXAMPLE:
-					main.py data -i "SYN123" -t "CENSUS TEST 1" -f "cantabular_query_example.json"
+					main.py data -i "SYN123" -t "CENSUS TEST 1" -f "examples/cantabular_query_example.json"
 
 			CANTABULAR API:
 
@@ -68,7 +68,7 @@
 				main.py data -i DATASET_ID -f FILENAME
 
 				EXAMPLE:
-					main.py data -i "SYN123" -f "cantabular_query_example.json"
+					main.py data -i "SYN123" -f "examples/cantabular_query_example.json"
 
 			CANTABULAR API:
 
@@ -87,12 +87,12 @@
 				main.py metadata -f FILENAME -r METADATA_FORMAT
 
 				EXAMPLE:
-					main.py metadata -f "Census2011-OU codebook.json" -r "O"
+					main.py metadata -f "examples/ons_metadata_example.json" -r "O"
 
 			CANTABULAR FORMAT:
 
 				main.py metadata -f FILENAME -r METADATA_FORMAT
 
 				EXAMPLE:
-					main.py metadata -f "cantabular_metadata_example.json" -r "C"
+					main.py metadata -f "examples/cantabular_metadata_example.json" -r "C"
 
