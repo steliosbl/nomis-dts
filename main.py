@@ -9,7 +9,7 @@ from args_manager import ArgsManager
 from file_reader import FileReader
 from type_hints import *
 from arguments import Arguments
-from pyjstat import pyjstat
+from pyjstat import pyjstat  # type: ignore
 import logging
 import sys
 import copy
@@ -99,7 +99,10 @@ def check_dataset_exists(connector: NomisApiConnector) -> bool:
             elif answer.lower() == 'y':
                 break
             print("PLEASE INPUT EITHER 'y' (YES) OR 'n' (NO)")
-    return exists
+    if isinstance(exists, bool):
+        return exists
+    else:
+        raise TypeError("Received unexpected type from Nomis API Connector.")
 
 
 def retrieve_data() -> Tuple[pyjstat.Dataset, List[str]]:
@@ -132,11 +135,15 @@ def check_dataset_dimensions(connector: NomisApiConnector,
     Obtain a list of all variables marked for posting that haven't already been assigned to the dataset.
 
     :param connector: An open, initialised instance of `NomisApiConnector`.
+    :param dimensions: List of dimensions.
     :return: A list of variables (from the arguments) that have not yet been assigned to the dataset.
     """
 
     assigned_variables_json = connector.get_dataset_dimensions(args.dataset_id)
-    assigned_variables = [assigned_variables_json[i]['name'] for i in range(len(assigned_variables_json))]
+    if isinstance(assigned_variables_json, list):
+        assigned_variables = [assigned_variables_json[i]['name'] for i in range(len(assigned_variables_json))]
+    else:
+        raise TypeError("Unexpected type received from the Nomis API Connector.")
 
     if "geography" in assigned_variables:
         assigned_variables.remove("geography")
@@ -231,7 +238,7 @@ def handle_variables(connector: NomisApiConnector,
 # Assign dimensions to dataset
 def handle_dimensions(connector: NomisApiConnector,
                       transformations: DatasetTransformations,
-                      key: str,
+                      key: Union[str, None],
                       ) -> None:
     """
     Assign dimensions to the dataset.

@@ -1,5 +1,5 @@
 from logging import getLogger
-from pyjstat import pyjstat
+from pyjstat import pyjstat  # type: ignore
 from abc import abstractmethod
 logger = getLogger("DTS-Logger")
 

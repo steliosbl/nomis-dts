@@ -63,10 +63,10 @@ class NomisMetadataApiConnector(ApiConnector):
                 raise TypeError("Metadata is invalid type, must be a Python dict.")
 
             if "id" in data and data["id"] is not None:
-                NomisMetadataApiConnector.validate_uuid(data["id"])
+                NomisMetadataApiConnector.validate_uuid(str(data["id"]))
 
             if "belongsTo" in data and data["belongsTo"] is not None:
-                NomisMetadataApiConnector.validate_uuid(data["belongsTo"])
+                NomisMetadataApiConnector.validate_uuid(str(data["belongsTo"]))
 
             if id is not None and ("id" not in data or id != data["id"]):
                 raise ValueError("Metadata id does not match parameter id.")
@@ -94,6 +94,8 @@ class NomisMetadataApiConnector(ApiConnector):
             return res.json()
         elif res.status_code == 404:
             raise requests.HTTPError("Metadata not found")
+        else:
+            raise requests.HTTPError(f"Unexpected response: {res.text}")
 
     def get_metadata_for_object(self, id: str, return_bool: bool = False) -> Union[List[Metadata], bool]:
         """

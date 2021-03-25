@@ -21,7 +21,7 @@ class Credentials:
 
     username: str
     password: str
-    key: str
+    key: Union[str, None]
 
     def __init__(self, username: str, password: str, key: Union[str, None] = None) -> None:
         self.username = username

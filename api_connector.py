@@ -43,7 +43,7 @@ class ApiConnector:
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         requests.Session.close(self.session)
 
-    def save_request(self, method: str, res: Union[requests.Response, None]) -> None:
+    def save_request(self, method: str, res: requests.Response) -> None:
         """
         Method for saving requests made and their responses (success or failure) to distinct files. Each created file
         will reside within a directory specific to this particular API connector instance.
@@ -54,15 +54,11 @@ class ApiConnector:
         if not self.record_requests:
             return
 
-        if res is None:
-            request = "N/A"
+        request = "N/A" if res.request.body is None else json.dumps(json.loads(res.request.body), indent=4)
+        try:
+            response = json.dumps(res.json(), indent=4)
+        except ValueError:
             response = "N/A"
-        else:
-            request = "N/A" if res.request.body is None else json.dumps(json.loads(res.request.body), indent=4)
-            try:
-                response = json.dumps(res.json(), indent=4)
-            except ValueError:
-                response = "N/A"
 
         responses_directory = os.path.join('responses')
         if not os.path.exists(responses_directory):
@@ -72,15 +68,16 @@ class ApiConnector:
         if not os.path.exists(this_response_directory):
             os.mkdir(this_response_directory)
 
-        file = f'{this_response_directory}/{datetime.now().strftime("%Y%m%d-%H%M%S")}_{method}.txt'
-        file_data = '{}\n\n{}\n{}\n\nResponse Status Code: {}\n\nRequest Body: \n{}\n\nResponse Body: \n{}'.format(
-                f'--------------------{method}--------------------',
-                f'{str(res.request.method)} at {str(res.request.url)}',
-                '\n'.join('{}: {}'.format(k, v) for k, v in res.headers.items()),
-                res.status_code,
-                request,
-                response
-        )
+        if isinstance(res, requests.Response):
+            file = f'{this_response_directory}/{datetime.now().strftime("%Y%m%d-%H%M%S")}_{method}.txt'
+            file_data = '{}\n\n{}\n{}\n\nResponse Status Code: {}\n\nRequest Body: \n{}\n\nResponse Body: \n{}'.format(
+                    f'--------------------{method}--------------------',
+                    f'{str(res.request.method)} at {str(res.request.url)}',
+                    '\n'.join('{}: {}'.format(k, v) for k, v in res.headers.items()),
+                    res.status_code,
+                    request,
+                    response
+            )
 
         logger.debug(f"Writing request for method {method} to file {file}.")
         with FileReader(file) as fr:

@@ -1,5 +1,5 @@
 from type_hints import *
-from pyjstat import pyjstat
+from pyjstat import pyjstat  # type: ignore
 from logging import getLogger
 
 logger = getLogger("DTS-Logger")
@@ -142,7 +142,7 @@ class DatasetTransformations:
         logger.debug("Prepared category requests.")
         return requests
 
-    def assign_dimensions(self, key: str) -> List[Dimensions]:
+    def assign_dimensions(self, key: Union[str, None]) -> List[Dimensions]:
         """
         Method for using the jsonstat table to construct a list of dimensions, based on the initial query to
         cantabular.

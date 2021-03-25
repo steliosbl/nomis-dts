@@ -1,8 +1,6 @@
-import sys;
+# type: ignore
 
-import requests
-
-sys.path.append('..')
+import sys; sys.path.append('..')
 import unittest.mock
 import uuid
 from nomis_metadata_api_connector import NomisMetadataApiConnector

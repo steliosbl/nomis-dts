@@ -22,7 +22,7 @@ class ConnectionInfo:
     """
 
     address: str
-    port: Union[str, int]
+    port: Union[str, int, None]
 
     def __init__(self, address: str, port: Union[str, int, None]) -> None:
         self.address = address
@@ -71,7 +71,7 @@ class ConnectionInfo:
                         ip_address(gethostbyname(urlinfo.path[0:urlinfo.path.find("/")]))
                     else:
                         ip_address(gethostbyname(urlinfo.path))
-                except ValueError:
+                except (ValueError, gaierror):
                     # If all of the above fails, then we can safely say the inputted address is not valid
                     raise ValueError("API connection info invalid; inputted address cannot be resolved. Please check"
                                      "the config file.")

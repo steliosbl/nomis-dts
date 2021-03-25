@@ -1,7 +1,7 @@
 from data_source import DataSource
 from file_reader import FileReader
 from logging import getLogger
-from pyjstat import pyjstat
+from pyjstat import pyjstat  # type: ignore
 import json
 logger = getLogger('DTS-Logger')
 

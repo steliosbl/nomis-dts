@@ -1,0 +1,157 @@
+{
+    "name": "Teaching-Dataset",
+    "date": "2021-02-15T13:25:28.170794",
+    "meta": {
+        "description": "An anonymised random sample of 1% of people from the 2011 Census for England and Wales, including both usual residents and short-term residents.",
+        "publisher": {
+            "name": "Office for National Statistics",
+            "url": "https://www.ons.gov.uk"
+        },
+        "license": "http://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/",
+        "copyright": "All material in this dataset is subject to Crown Copyright protection and is published under the Open Government Licence (OGL).",
+        "contact": {
+            "name": "Census Customer Services",
+            "phone": "01329 444 972",
+            "email": "census.customerservices@ons.gov.uk",
+            "url": "https://www.ons.gov.uk/census/censuscustomerservices"
+        },
+        "units": "People",
+        "temporal": "2011-03-27",
+        "methodology": {
+            "statement": "The census is the most complete source of information about the population that we have. This Teaching Dataset is a 1% sample of data from the complete England and Wales population, which includes usual residents, short-term residents and students living away from home during term-time.",
+            "url": "https://www.ons.gov.uk/census/2011census/2011censusdata/censusmicrodata/microdatateachingfile/microdatauserguide"
+        },
+        "sdc": {
+            "statement": "Preserving the confidentiality of personal information provided by the public on their census questionnaires remains a top priority for the census. The Microdata Teaching File contains a 1% sample of people with a small number of their characteristics. Personal identifiers (name, address, date of birth) have been removed and potentially disclosive output variables have been either completely removed or have been aggregated to reduce the level of detail available for each record.",
+            "url": "http://www.ons.gov.uk/ons/guide-method/census/2011/census-data/2011-census-prospectus/new-developments-for-2011-census-results/statistical-disclosure-control/index.html"
+        }
+    },
+    "vars": [
+        {
+            "id": "REGION",
+            "name": "Region",
+            "meta": {
+                "description": "The geographic region in which a person lives, derived from the address of their household or communal establishment."
+            }
+        },
+        {
+            "id": "COUNTRY",
+            "name": "Country",
+            "meta": {
+                "description": "The country - either England or Wales - in which a person lives, derived from region they live in."
+            }
+        },
+        {
+            "id": "RESIDENCE_TYPE",
+            "name": "Residence Type",
+            "meta": {
+                "description": "This defines the type of residence that a person lives in. It categorises people as living in a household or living in a communal establishment. People who filled in the normal household questionnaire were recorded as living in a household.  Those that filled in an individual questionnaire were asked what type of accommodation they lived in, i.e. whether it was a household or a communal establishment."
+            }
+        },
+        {
+            "id": "FAMILY_COMPOSITION",
+            "name": "Family Composition",
+            "meta": {
+                "description": "Family type is the classification of families into different types distinguished by the presence, absence and type of couple relationship: whether a married couple family, a same-sex civil partnership family, a cohabiting couple family, or a lone parent family."
+            }
+        },
+        {
+            "id": "POPULATION_BASE",
+            "name": "Population Base",
+            "meta": {
+                "description": "The main census population base into which a person falls."
+            }
+        },
+        {
+            "id": "SEX",
+            "name": "Sex",
+            "meta": {
+                "description": "The classification of a person as either male or female."
+            }
+        },
+        {
+            "id": "AGE",
+            "name": "Age",
+            "meta": {
+                "description": "Age is derived from the date of birth question and is a person's age at their last birthday, at 27 March 2011. Dates of birth that imply an age over 115 are treated as invalid and the person‟s age is imputed. Infants less thanone year old are classified as 0 years of age."
+            }
+        },
+        {
+            "id": "MARITAL_STATUS",
+            "name": "Marital Status",
+            "meta": {
+                "description": "Marital and civil partnership status classifies an individual according to their legal marital or registered same-sex civil partnership status as at census day, 27 March 2011.This topic is the equivalent of the 2001 Census topic “Marital status”, but has undergone significant revision to take account of the Civil Partnership Act which came into force on 5 December 2005.\n\nMarital and civil partnership states include: married/in a registered same-sex civil partnership; separated (but still legally married/in a registered same-sex civil partnership); divorced/formerly in a registered same-sex civil partnership; or widowed/surviving same-sex civil partner.\n\nAlthough the term “single” is widely used to cover people in a number of states such as divorced or separated it is not a legally recognised status and was not an option on the census questionnaire. In census results the term “single” is used to refer only to someone who has never been married or in a registered same-sex civil partnership, which were options on the census questionnaire."
+            }
+        },
+        {
+            "id": "STUDENT",
+            "name": "Student",
+            "meta": {
+                "description": "Schoolchildren and students in full-time education studying away from their family home are treated as usually resident at their term-time address. Basic demographic information only (name, sex, age, marital status and relationship) is collected at their non term-time address (their “home” or “vacation”address). The information on families, household size and household composition for their non term-time address does not include them."
+            }
+        },
+        {
+            "id": "COUNTRY_OF_BIRTH",
+            "name": "Country of Birth",
+            "meta": {
+                "description": "Country of birth is the country in which a person was born. The country of birth question included six tick-box responses – one for each of the four parts of the UK, one for the Republic of Ireland, and one for “elsewhere”. Where a person ticked “elsewhere”, they were asked to write in the current name of the country in which they were born. Responses are assigned codes based on the National Statistics Country Classification.\n\nThe grouping of countries within the classification is broadly regional, but takesinto account the grouping of European Union (EU) countries. Countries in the EU are grouped into those that were EU members in March 2001, and those that became members (accession countries) between April 2001 and March 2011 as part of the EU enlargement process."
+            }
+        },
+        {
+            "id": "HEALTH",
+            "name": "Health",
+            "meta": {
+                "description": "General health is a self-assessment of a person’s general state of health. People were asked to assess whether their health was very good, good, fair, bad or very bad. This assessment is not based on a person's health over any specified period of time."
+            }
+        },
+        {
+            "id": "ETHNIC_GROUP",
+            "name": "Ethnic Group",
+            "meta": {
+                "description": "Ethnic group classifies people according to their own perceived ethnic group and cultural background."
+            }
+        },
+        {
+            "id": "RELIGION",
+            "name": "Religion",
+            "meta": {
+                "description": "The voluntary question on religion in the 2011 Census was intended to capture people's religious affiliation and identification at the time of the Census irrespective of whether they practised or believed in that religion or how important it was in their lives.\n\nIf a person had no religion then the first of a series of tick boxes could be selected. Care should be taken when using these data not to infer, or allow the inference by others, that the practice of a religion or specific religious activities that are expected of believers has been measured. Unlike other census questions where missing answers are imputed, this question was voluntary, and where no answer was provided the response is categorised as 'not stated'."
+            }
+        },
+        {
+            "id": "ECONOMIC_ACTIVITY",
+            "name": "Economic Activity",
+            "meta": {
+                "description": "Economic activity relates to whether or not a person who was aged 16 and over was working or looking for work in the week before census. Rather than a simple indicator of whether or not someone was currently in employment, it provides a measure of whether or not a person was an active participant in the labour market.\n\nA person's economic activity is derived from their “activity last week”. This is an indicator of their status or availability for employment - whether employed, unemployed, or their status if not employed and not seeking employment. Additional information included in the economic activity classification is also derived from information about the number of hours a person works and their type of employment - whether employed or self-employed.\n\nThe census concept of economic activity is compatible with the standard for economic status defined by the International Labour Organisation (ILO). It is one of a number of definitions used internationally to produce accurate and comparable statistics on employment, unemployment and economic status."
+            }
+        },
+        {
+            "id": "OCCUPATION",
+            "name": "Occupation",
+            "meta": {
+                "description": "A person's occupation relates to their main job and is derived from either their job title or details of the activities involved in their job. This is used to assign responses to an occupation code based on the Standard Occupational Classification 2010 (SOC2010)."
+            }
+        },
+        {
+            "id": "INDUSTRY",
+            "name": "Industry",
+            "meta": {
+                "description": "The industry in which a person aged 16 and over works relates to their main job, and is derived from information provided on the main activity of their employer or business. This is used to assign responses to an industry code based on the Standard Industrial Classification 2007."
+            }
+        },
+        {
+            "id": "HOURS_WORKED",
+            "name": "Hours worked per week",
+            "meta": {
+                "description": "The number of hours that a person aged 16 to 74, in employment in the week before the census, worked in their main job. This includes paid and unpaid overtime."
+            }
+        },
+        {
+            "id": "APPROXIMATE_SOCIAL_GRADE",
+            "name": "Approximated Social Grade",
+            "meta": {
+                "description": "Social Grade is the socio-economic classification used by the Market Research and Marketing Industries, most often in the analysis of spending habits and consumer attitudes. Although it is not possible to allocate Social Grade precisely from information collected by the 2011 Census, the Market Research Society has developed a method forusing Census information to provide a good approximation of Social Grade."
+            }
+        }
+    ]
+}

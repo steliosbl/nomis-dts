@@ -1,8 +1,12 @@
+# type: ignore
+
 import sys; sys.path.append('..')
+from file_reader import FileReader
 import logging
 import unittest
 from unittest.mock import patch
 import main
+
 
 
 """
@@ -25,6 +29,20 @@ Note: include -b flag to silence stdout
 class TestMain(unittest.TestCase):
     def setUp(self) -> None:
         main.logger.setLevel(logging.ERROR)
+        args = [
+            'prog',
+            'data',
+            '-q', 'COUNTRY, SEX',
+            '-d', 'Usual-Residents',
+            '-i', 'DC1101EW',
+            '-t', 'Dataset Title',
+            '-c', 'test_config.json',
+            '-y'
+
+        ]
+        with patch.object(sys, 'argv', args):
+            self.arguments = main.collect_arguments()
+        self.configuration = main.collect_configuration(self.arguments)
 
     def test_collect_arguments(self):
         args = [
@@ -40,20 +58,9 @@ class TestMain(unittest.TestCase):
             self.assertIsInstance(main.collect_arguments(), main.Arguments)
 
     def test_collect_configuration(self):
-        args = [
-            'prog',
-            'data',
-            '-q', 'COUNTRY, SEX',
-            '-d', 'Usual-Residents',
-            '-i', 'DC1101EW',
-            '-t', 'Dataset Title',
-            '-c', 'test_config.json',
-            '-y'
+        self.assertIsInstance(main.collect_configuration(self.arguments), main.Configuration)
 
-        ]
-        with patch.object(sys, 'argv', args):
-            arguments = main.collect_arguments()
-        self.assertIsInstance(main.collect_configuration(arguments), main.Configuration)
+
 
 
 if __name__ == '__main__':

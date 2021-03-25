@@ -1,3 +1,5 @@
+# type: ignore
+
 import sys; sys.path.append("..")
 from unittest.mock import patch
 from args_manager import ArgsManager
