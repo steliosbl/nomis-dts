@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\nomis-interfaces-variables\nomis-interfaces-variables.csproj" />
+    <ProjectReference Include="..\nomis-interfaces-contacts\nomis-interfaces-contacts.csproj" />
+    <ProjectReference Include="..\nomis-interfaces-datasets\nomis-interfaces-datasets.csproj" />
+    <ProjectReference Include="..\nomis-interfaces-core\nomis-interfaces-core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Options" Version="5.0.0" />
+  </ItemGroup>
+  
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>Nomis.MockStores</RootNamespace>
+  </PropertyGroup>
+
+</Project>

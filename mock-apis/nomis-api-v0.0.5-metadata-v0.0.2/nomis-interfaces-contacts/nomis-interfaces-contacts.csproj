@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\nomis-interfaces-core\nomis-interfaces-core.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.1</TargetFramework>
+    <RootNamespace>Nomis.Interfaces.Contacts</RootNamespace>
+  </PropertyGroup>
+
+</Project>
