@@ -83,13 +83,13 @@ Full instructions can be found in the [`USAGE.txt`](https://github.com/stelioslo
 With the mock Data and Metadata APIs running, you can view a Swagger Interface for each API by going to:
 
 ```
-http://localhost:[PORT]/swagger
+https://localhost:[PORT]/swagger
 ```
 
 So with the pre-configured ports these UIs will be available at:
 ```
-http://localhost:5001/swagger
-http://localhost:5005/swagger
+https://localhost:5001/swagger
+https://localhost:5005/swagger
 ```
 
 From there you can perform GET-requests to verify that the imports performed by the DTS were successful.
