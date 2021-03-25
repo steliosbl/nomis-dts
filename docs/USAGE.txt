@@ -59,7 +59,7 @@
 				main.py data -q QUERY_VARIABLES -i DATASET_ID -t DATASET_TITLE -d QUERY_DATASET
 
 				EXAMPLE:
-					main.py data -q "SEX, AGE" -i "SYN123" -t "CENSUS TEST 1" -d "Usual-Residents"
+					main.py data -q "SEX, AGE" -i "SYN456" -t "CENSUS TEST 2" -d "Usual-Residents"
 
 
 		# UPDATING A CURRENT DATASET #
@@ -75,7 +75,7 @@
 				main.py data -q QUERY_VARIABLES -i DATASET_ID -d QUERY_DATASET
 
 				EXAMPLE:
-					main.py data -q "SEX, AGE" -i "SYN123" -d "Usual-Residents"
+					main.py data -q "SEX, AGE" -i "SYN456" -d "Usual-Residents"
 
 
 	## METADATA ##

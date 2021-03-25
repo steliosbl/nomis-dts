@@ -67,10 +67,10 @@ Full instructions can be found in the [`USAGE.txt`](https://github.com/stelioslo
 `python main.py data -q "SEX, AGE" -i "SYN456" -t "CENSUS TEST 2" -d "Usual-Residents"`
 
 #### Updating a dataset from a file
-`python main.py data -i "SYN123" -f "examples/cantabular_query_example.json"`
+`python main.py data -i "SYN123" -t "CENSUS TEST 1" -f "examples/cantabular_query_example.json"`
 
 #### Updating a dataset from Cantabular
-`python main.py data -q "SEX" -i "SYN123" -d "Usual-Residents"`
+`python main.py data -q "SEX, AGE" -i "SYN456" -t "CENSUS TEST 2" -d "Usual-Residents"`
 
 #### Importing ONS-formatted metadata
 `python main.py metadata -f "examples/ons_metadata_example.json" -r "O"`
