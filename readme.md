@@ -31,7 +31,7 @@ To install them automatically, run:
 `pip install -r requirements.txt`
 
 ### Nomis APIs
-The Nomis Data API and Metadata API must be available for the program to work. To compile and run the Data API, make sure you have `dotnet` installed. Navigate to the [`mock-apis`](https://github.com/stelioslogothetis/nomis-dts/tree/submitted/mock-apis) directory, then to [`nomis-api-v0.0.5-metadata-v0.0.2`](https://github.com/stelioslogothetis/nomis-dts/tree/submitted/mock-apis/nomis-api-v0.0.5-metadata-v0.0.2) if running on Windows or Linux, or the [`__MACOSX/nomis-api-v0.0.5-metadata-v0.0.2`](https://github.com/stelioslogothetis/nomis-dts/tree/submitted/mock-apis/__MACOSX/nomis-api-v0.0.5-metadata-v0.0.2) directory if running on Mac. Then run the following commands):
+The Nomis Data API and Metadata API must be available for the program to work. To compile and run the Data API, make sure you have `dotnet` installed. Navigate to the [`mock-apis`](https://github.com/stelioslogothetis/nomis-dts/tree/submitted/mock-apis) directory, then to [`nomis-api-v0.0.5-metadata-v0.0.2`](https://github.com/stelioslogothetis/nomis-dts/tree/submitted/mock-apis/nomis-api-v0.0.5-metadata-v0.0.2) Then run the following commands:
 
 ```
 cd fe-api
