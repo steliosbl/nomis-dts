@@ -27,14 +27,5 @@
     "port": "5005"
   },
   "Geography Variables": [
-    "OA",
-    "LSOA",
-    "MSOA",
-    "LA",
-    "MERGED_LA",
-    "REGION",
-    "COUNTRY",
-    "Region",
-    "Country"
   ]
 }

@@ -31,7 +31,7 @@ To install them automatically, run:
 `pip install -r requirements.txt`
 
 ### Nomis APIs
-The Nomis Data API and Metadata API must be available for the program to work. To compile and run the Data API, make sure you have `dotnet` installed. Navigate to the mock API directory and run the following commands):
+The Nomis Data API and Metadata API must be available for the program to work. To compile and run the Data API, make sure you have `dotnet` installed. Navigate to the Nomis API directory and run the following commands):
 
 ```
 cd fe-api
@@ -48,7 +48,11 @@ dotnet run bin/Debug/netcoreapp3.1/fe-api-metadata.dll
 For transforming datasets, only the Data API must be running. For transforming metadata *both* must be running.
 
 ### Configuration
-The `config.json` already contains connection information and credentials for the Cantabular API, as well as connection information for the mock Nomis APIs. To change any of this, please refer to the [manual](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf).
+The `config.json` already contains connection information and credentials for the Cantabular API, as well as connection information for the mock Nomis APIs. 
+
+**NOTE:** The current Nomis mock APIs *do not support Geography Variables*, so the relevant entry in the `config.json` must be left as an empty list. This functionality is necessary for the real APIs however, and works properly there. 
+
+To change the configuration, please refer to the [manual](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf).
 
 # Running the Utility
 Full instructions can be found in the [`USAGE.txt`](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/USAGE.txt "USAGE.txt") and in the [manual](https://github.com/stelioslogothetis/nomis-dts/blob/master/docs/manual.pdf)
