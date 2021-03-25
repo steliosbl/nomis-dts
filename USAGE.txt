@@ -42,7 +42,7 @@
 		                        path for non-default config file
 
 		  -l LOG_FILE, --log-file LOG_FILE
-		                        path for non-default config file
+		                        path for non-default log file
 	
 
 	## DATA ##

@@ -15,7 +15,7 @@
   },
   "Nomis Connection Information": {
     "address": "https://localhost",
-    "port": "5003"
+    "port": "5001"
   },
   "Nomis Metadata Credentials": {
     "username": "user",
@@ -24,7 +24,7 @@
   },
   "Nomis Metadata Connection Information": {
     "address": "https://localhost",
-    "port": "5001"
+    "port": "5005"
   },
   "Geography Variables": [
     "OA",

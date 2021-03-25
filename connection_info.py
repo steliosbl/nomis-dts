@@ -8,13 +8,16 @@ logger = getLogger("DTS-Logger")
 
 
 class ConnectionInfo:
-    """Class for containing and validating the connection information (address and port) for each API
+    """
+    Class for containing and validating the connection information (address and port) for each API.
 
-    :param address: A string of a valid address, either a url or IP address, for connecting to the API
-    :param port: A string or an integer representing the port the API will be served on
+    :param address: A string of a valid address, either a URL or IP address, for connecting to the API.
+    :param port: A string or an integer representing the port the API will be served on.
 
-    :ivar address: initial value: address
-    :ivar port: initial value: port
+    :ivar address: Initial value: `address`.
+    :vartype address: str
+    :ivar port: Initial value: `port`.
+    :vartype port: Union[str, int]
 
     """
 
@@ -26,12 +29,18 @@ class ConnectionInfo:
         self.port = port
 
     def validate(self) -> bool:
-        """ Method for validating the ConnectionInfo attributes. For this class, all attributes are mandatory, and so
+        """
+        Method for validating the ConnectionInfo attributes. For this class, all attributes are mandatory, and so
         need to be successfully validated. In this case, the address must be a valid IP address, or must be able to be
         successfully resolved into one (i.e., it can be a valid URL), and port must be a valid numerical string, or an
         integer, and its numerical value must be within an acceptable range.
 
-        :return: True if the validation is successful; otherwise, an exception will have been raised.
+        :raises TypeError: If the `address` is not a valid string, or the `port` is not a valid numeric string or
+            integer.
+        :raises ValueError: If the `address` is an empty string, or if the numeric value of the `port` is not within an
+            acceptable range (i.e., between 0 and 49151, inclusive).
+
+        :return: `True` if the validation is successful; otherwise, an exception will have been raised.
         """
         if not isinstance(self.address, str):
             raise TypeError("API connection information failed to validate; the address must be a valid string. Please "
@@ -66,10 +75,10 @@ class ConnectionInfo:
                     # If all of the above fails, then we can safely say the inputted address is not valid
                     raise ValueError("API connection info invalid; inputted address cannot be resolved. Please check"
                                      "the config file.")
-        logger.info(f"The address {self.address} is valid.")
+        logger.debug(f"The address {self.address} is valid.")
 
         if self.port is None:
-            logger.info("No port inputted.")
+            logger.debug("No port inputted.")
         elif not isinstance(self.port, str) and not isinstance(self.port, int):
             raise TypeError("API connection information failed to validate; the port must be a valid integer or "
                             "numeric string. Please check the config file.")
@@ -78,6 +87,6 @@ class ConnectionInfo:
                              "config file.")
         else:
             self.port = str(self.port)
-            logger.info(f"Port {self.port} is valid.")
+            logger.debug(f"Port {self.port} is valid.")
 
         return True
