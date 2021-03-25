@@ -6,7 +6,7 @@
   },
   "Cantabular Connection Information": {
     "address": "https://ftb-api-ext.ons.sensiblecode.io",
-    "port": "8491"
+    "port": null
   },
   "Nomis Credentials": {
     "username": "user",
@@ -24,6 +24,17 @@
   },
   "Nomis Metadata Connection Information": {
     "address": "https://localhost",
-    "port": "5001"
-  }
+    "port": "5005"
+  },
+  "Geography Variables": [
+    "OA",
+    "LSOA",
+    "MSOA",
+    "LA",
+    "MERGED_LA",
+    "REGION",
+    "COUNTRY",
+    "Region",
+    "Country"
+  ]
 }

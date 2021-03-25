@@ -1,3 +1,4 @@
+import sys; sys.path.append('..')
 import unittest
 from config_manager import ConfigManager
 from configuration import Configuration
@@ -6,11 +7,11 @@ from credentials import Credentials
 import config_constants
 from collections import namedtuple
 
-"""TO RUN 
+"""
+Prerequisites:
+ - None
 
-Ensure config_manager.py, configuration.py, credentials.py, and connection_info.py are all in the same directory as this
-
-in terminal: 
+Test all: 
  - python test_config_manager.py 
 
 """
@@ -25,7 +26,7 @@ VALID_CONFIG_FILE = '''
   },
   "Cantabular Connection Information": {
     "address": "https://ftb-api-ext.ons.sensiblecode.io",
-    "port": "8491"
+    "port": null
   },
   "Nomis Credentials": {
     "username": "user",
@@ -57,7 +58,7 @@ INVALID_CONFIG_FILE = '''
   },
   "Cantabular Connection Information": {
     "address": "https://ftb-api-ext.ons.sensiblecode.io",
-    "port": "8491"
+    "port": null
   },
   "Nomis Credentials": {
     "username": "user",

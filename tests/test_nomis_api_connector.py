@@ -1,22 +1,24 @@
+import sys; sys.path.append('..')
 import unittest.mock
 import sys
 from nomis_api_connector import NomisApiConnector
 import requests
-import time
+
 
 """
-Usage: 
- - To run all tests:        python -m unittest test_nomisApiConnector.TestValidNomisApiConnector
- 
- - To run specific tests:   python -m unittest test_nomisApiConnector.TestNomisApiConnectorDatasets.[test]
-        - for example, python -m unittest test_nomisApiConnector.TestNomisApiConnectorDatasets.test_dataset_exists
-        -              python -m unittest test_nomisApiConnector.TestNomisApiConnectorVariables.test_variable_exists
-        
- - Note: include -b flag to silence stdout
-
-
 Prerequisite:
-  - Nomis API must be running on port 5001
+  - Nomis API must be running on port 5001 (although this port is configurable in the constants below)
+
+Test all:        
+ - python test_nomis_api_connector.py 
+ 
+To run specific tests:   
+ - python -m unittest test_nomisApiConnector.TestNomisApiConnectorDatasets.[test]
+for instance,
+ - python -m unittest test_nomisApiConnector.TestNomisApiConnectorDatasets.test_dataset_exists
+ - python -m unittest test_nomisApiConnector.TestNomisApiConnectorVariables.test_variable_exists
+        
+Note: include -b flag to silence stdout
   
 """
 
@@ -210,8 +212,8 @@ VALID_CAT_ARR = [VALID_CAT_1, VALID_CAT_2]
 class TestNomisApiConnectorDatasets(unittest.TestCase):
     def setUp(self) -> None:
         # Set up two connectors, one with a valid address and one without
-        self.invalid_connector = NomisApiConnector(INVALID_CREDENTIALS, INVALID_ADDRESS)
-        self.valid_connector = NomisApiConnector(VALID_CREDENTIALS, VALID_ADDRESS, PORT)
+        self.invalid_connector = NomisApiConnector(INVALID_CREDENTIALS, INVALID_ADDRESS, record_requests=False)
+        self.valid_connector = NomisApiConnector(VALID_CREDENTIALS, VALID_ADDRESS, PORT, record_requests=False)
 
         # Create two datasets to be used in the tests
         self.valid_connector.create_dataset(VALID_ID_1, VALID_DS_1)
@@ -219,7 +221,7 @@ class TestNomisApiConnectorDatasets(unittest.TestCase):
 
         # Assign dimensions and observations to test dataset 1
         self.valid_connector.assign_dimensions_to_dataset(VALID_ID_1, VALID_DIMENSIONS)
-        self.valid_connector.append_dataset_observations(VALID_ID_1, VALID_OBSERVATIONS_1)
+        self.valid_connector.overwrite_dataset_observations(VALID_ID_1, VALID_OBSERVATIONS_1)
 
         self.stdout = sys.stdout
 
@@ -231,6 +233,7 @@ class TestNomisApiConnectorDatasets(unittest.TestCase):
                                             f'{VALID_ID_1}/values', verify=False)
         self.valid_connector.session.delete(f'{self.valid_connector.client}/Datasets/{VALID_ID_1}', verify=False)
         self.valid_connector.session.delete(f'{self.valid_connector.client}/Datasets/{VALID_ID_2}', verify=False)
+        self.valid_connector.session.delete(f'{self.valid_connector.client}/Datasets/{VALID_ID_1}/values', verify=False)
 
     def test_validate_ds(self) -> None:
         # Invalid
@@ -280,8 +283,8 @@ class TestNomisApiConnectorDatasets(unittest.TestCase):
             self.valid_connector.get_dataset(True, return_bool=True)
         
         # Valid
-        self.assertTrue(self.valid_connector.get_dataset(VALID_ID_1, return_bool = True))
-        self.assertTrue(self.valid_connector.get_dataset(VALID_ID_2, return_bool = True))
+        self.assertTrue(self.valid_connector.get_dataset(VALID_ID_1, return_bool=True))
+        self.assertTrue(self.valid_connector.get_dataset(VALID_ID_2, return_bool=True))
 
     def test_create_dataset(self) -> None:
         # Invalid attempts to create dataset with various errors
@@ -305,7 +308,8 @@ class TestNomisApiConnectorDatasets(unittest.TestCase):
         self.assertTrue(self.valid_connector.get_dataset(VALID_ID_3, return_bool = True))
         valid_ds = self.valid_connector.get_dataset(VALID_ID_3)
         self.assertEqual(valid_ds['id'], VALID_ID_3)
-        # self.valid_connector.session.delete(f'{self.valid_connector.client}/Datasets/{VALID_ID_3}', verify=False)
+
+        self.valid_connector.session.delete(f'{self.valid_connector.client}/Datasets/{VALID_ID_3}', verify=False)
 
     def test_get_dataset_dimensions(self) -> None:
         # Invalid
@@ -326,6 +330,13 @@ class TestNomisApiConnectorDatasets(unittest.TestCase):
         self.assertTrue(self.valid_connector.assign_dimensions_to_dataset(VALID_ID_2, VALID_DIMENSIONS))
         self.valid_connector.session.delete(f'{self.valid_connector.client}/Datasets/'
                                             f'{VALID_ID_2}/dimensions', verify=False)
+
+    # def test_overwrite_dataset_observations(self) -> None:
+    #     with self.assertRaises(requests.ConnectionError):
+    #         self.invalid_connector.overwrite_dataset_observations(VALID_ID_2, VALID_OBSERVATIONS_2)
+    #
+    #     self.assertTrue(self.valid_connector.overwrite_dataset_observations(VALID_ID_2, VALID_OBSERVATIONS_2))
+    #     self.valid_connector.session.delete(f'{self.valid_connector.client}/Datasets/{VALID_ID_2}/values', verify=False)
 
 
 class TestNomisApiConnectorVariables(unittest.TestCase):
@@ -376,10 +387,9 @@ class TestNomisApiConnectorVariables(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.valid_connector.create_variable_category(VALID_VAR_NAME_1, str(VALID_CAT_1))
         self.assertTrue(self.valid_connector.create_variable_category("GEOGRAPHY", VALID_CAT_ARR))
-        # time.sleep(10)
+
         self.valid_connector.session.delete(f'{self.valid_connector.client}/Variables/GEOGRAPHY'
                                             f'/categories', verify=False)
-
 
 
 if __name__ == '__main__':

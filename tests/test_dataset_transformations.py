@@ -1,16 +1,24 @@
+import sys; sys.path.append('..')
 import unittest
 from dataset_transformations import DatasetTransformations
 from collections import OrderedDict
 from type_hints import *
 from pyjstat import pyjstat
 
+"""
+Prerequisite:
+  - None
 
-"""TO RUN 
-
-Ensure in the same directory as dataset_transformations.py
-
-in terminal: 
+Test all:        
  - python test_dataset_transformations.py 
+
+To run specific tests:   
+ - python -m unittest test_dataset_transformations.TestDatasetTransformations.[test]
+for instance,
+ - python -m unittest test_dataset_transformations.TestDatasetTransformations.test_validate_table
+ - python -m unittest test_dataset_transformations.TestDatasetTransformations.test_category_creation
+
+Note: include -b flag to silence stdout
 
 """
 
@@ -85,7 +93,7 @@ class TestDatasetTransformations(unittest.TestCase):
     def test_validate_table(self):
         """Test that an instance of DataTransformations is blocked when the table parameter is invalid
         """
-        with self.assertRaises(KeyError):
+        with self.assertRaises(LookupError):
             DatasetTransformations(INVALID_TABLE)
         with self.assertRaises(TypeError):
             DatasetTransformations({"dimensions": True})
@@ -127,7 +135,7 @@ class TestDatasetTransformations(unittest.TestCase):
         """Test the category_creation() method
         """
         # Check valid attempts
-        cats = self.valid_dataset_transformations.category_creation()
+        cats = self.valid_dataset_transformations.category_creation(["10000"])
         self.assertIsInstance(cats, list)
         for cat in cats:
             self.assertIsInstance(cat, dict)
@@ -135,7 +143,7 @@ class TestDatasetTransformations(unittest.TestCase):
     def test_assign_dimensions(self) -> None:
         """Test the assign_dimensions() method
         """
-        dims = self.valid_dataset_transformations.assign_dimensions()
+        dims = self.valid_dataset_transformations.assign_dimensions("SEX")
         self.assertIsInstance(dims, list)
         for dim in dims:
             self.assertIsInstance(dim, dict)
@@ -161,3 +169,7 @@ class TestDatasetTransformations(unittest.TestCase):
         for md in mds:
             self.assertIsInstance(md, dict)
             self.assertEqual(md['belongsTo'], VALID_UUID_MD.uuid)
+
+
+if __name__ == "__main__":
+    unittest.main()
