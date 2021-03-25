@@ -11,26 +11,18 @@ logger = getLogger('DTS-Logger')
 
 
 class ConfigManager:
-    """
-    Class for handling the program configuration, including reading from default or customised file paths, writing
+    """Class for handling the program configuration, including reading from default or customised file paths, writing
     default files, and decoding JSON configuration into relevant classes
 
     :param args: An instance of the arguments manager, which may contain an alternate config file
-
-    :ivar config: A python dict containing the contents of the config file that the program will use.
-    :vartype config: dict
-    :ivar default: A python dict containing the default configuration information, in case the inputted or enforced one
-        contains errors.
-    :vartype default: dict
     """
-
-    # config: Union[dict, None]
-    # default: Union[dict, None]
+    config: Union[dict, None]
+    default: Union[dict, None]
 
     def __init__(self, args: Arguments = None) -> None:
 
-        self.config = {}
-        self.default = {}
+        self.config = None
+        self.default = None
 
         # Ensure that the default path does contain the default config file. If not, then construct it
         with FileReader(DEFAULT_PATH) as fr:
@@ -38,12 +30,12 @@ class ConfigManager:
                 fr.exists()
                 self.default = fr.load_json()
             except FileNotFoundError:
-                logger.debug(f'No file found at the default path ({DEFAULT_PATH}), new default file created.')
+                logger.info(f'No file found at the default path ({DEFAULT_PATH}), new default file created.')
                 fr.write_json(json.loads(DEFAULT_CONFIG_FILE))
                 self.default = fr.load_json()
             except ValueError:
                 # Will except here if the current file at the default path is invalid in any way
-                logger.debug(f'File at the default path ({DEFAULT_PATH}) is invalid, new default file created.')
+                logger.info(f'File at the default path ({DEFAULT_PATH}) is invalid, new default file created.')
                 fr.write_json(json.loads(DEFAULT_CONFIG_FILE))
                 self.default = fr.load_json()
 
@@ -53,10 +45,10 @@ class ConfigManager:
                     if not fr.file.lower().endswith(".json") or not fr.exists():
                         raise ValueError
                     self.config = fr.load_json()
-                    logger.debug(f"Inputted file at ({fr.file}) used as config.")
+                    logger.info(f"Inputted file at ({fr.file}) used as config.")
                 except (ValueError, AttributeError):
                     # Excepts if the file retrieved from args is invalid at all (syntactically or just doesn't exist)
-                    logger.debug(f"Inputted file path ({fr.file}) either not found or is invalid.")
+                    logger.info(f"Inputted file path ({fr.file}) either not found or is invalid.")
 
                     self.config = self.default
         else:
@@ -69,23 +61,21 @@ class ConfigManager:
         pass
 
     def write_default(self) -> None:
-        """
-        Write a default config file if one doesn't exist, utilising the `FileReader` class.
+        """Write a default config file if one doesn't exist
         """
         self.default = json.loads(DEFAULT_CONFIG_FILE)
         with open(DEFAULT_PATH, 'w') as f:
             json.dump(self.default, f, indent=2)
 
     def decode_credentials(self, key: str) -> Credentials:
-        """
-        Create an instance of Credentials based on the content in the config file for the 'key' parameter.
+        """Create an instance of Credentials based on the content in the config file for the 'key' parameter
 
-        :return: A valid instance of `Credentials`.
+        :return: A valid instance of Credentials
         """
         try:
             creds = json.dumps(self.config[key])
         except KeyError:
-            logger.debug(f"Config file does not contain sufficient {key}. Using default")
+            logger.info(f"Config file does not contain sufficient {key}. Using default")
             creds = json.dumps(self.default[key])
         if "username" not in creds:
             raise KeyError(f"{key} missing 'username' attribute.")
@@ -96,12 +86,9 @@ class ConfigManager:
         return json.loads(creds, object_hook=lambda d: Credentials(**d))
 
     def decode_connection_info(self, key: str) -> ConnectionInfo:
-        """
-        Create an instance of ConnectionInfo based on the content the config file for the 'key' parameter.
+        """Create an instance of ConnectionInfo based on the content the config file for the 'key' parameter
 
-        :param key: This corresponds to the name of the attribute in the JSON config file that contains the connection
-            information for a certain API - e.g. 'Nomis Connection Information'.
-        :return: A valid instance of `ConnectionInfo`.
+        :return: A valid instance of ConnectionInfo
         """
         try:
             conn_info = json.dumps(self.config[key])
@@ -115,11 +102,9 @@ class ConfigManager:
         return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))
 
     def decode_geography_variables(self, key: str) -> List[str]:
-        """
-        Create an instance of the geography variables based on the content of the config file for the 'key' parameter
+        """Create an instance of the geography variables based on the content of the config file for the 'key' parameter
 
-        :param key: The 'key' corresponding to the Geography variables in the config file.
-        :return: A list containing the geography variables.
+        :return: A list containing the geography variables
         """
         try:
             geography_variables = json.dumps(self.config[key])
@@ -129,12 +114,12 @@ class ConfigManager:
 
         return json.loads(geography_variables)
 
+
     def decode_configuration(self) -> Configuration:
-        """
-        Create an instance of Configuration by combining an instances of Credentials and ConnectionInfo for each of
+        """Create an instance of Configuration by combining an instances of Credentials and ConnectionInfo for each of
         the APIs that the program will communicate with.
 
-        :return: A validated instance of `Configuration`.
+        :return: An instance of Configuration
         """
 
         # Establish the APIs included in the config file
@@ -145,18 +130,20 @@ class ConfigManager:
             ("nomis_metadata", "Nomis Metadata Credentials", "Nomis Metadata Connection Information")
         ]
 
-        # Create a dictionary containing the names of the APIs as keys, and namedtuples containing instances of
+        # Create a dictionary containing the names of the APIs as keys, and nametuples containing instances of
         # Credentials and ConnectionInfo for each API as values; all as specified in the configurable list above
         configurations = {
             name.lower(): CredentialsConninfo(self.decode_credentials(creds), self.decode_connection_info(conn))
             for name, creds, conn in api_config_details
         }
 
+        configurations["geography"] = self.decode_geography_variables("Geography Variables")
+
         for api in configurations:
+            if api == "geography":
+                continue
             configurations[api].credentials.validate()
             configurations[api].connection_info.validate()
 
-        # Add the geography to the configurations
-        variables = {"geography": self.decode_geography_variables("Geography Variables")}
 
-        return Configuration(configurations, variables)
+        return Configuration(configurations)

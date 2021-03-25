@@ -1,4 +1,3 @@
-import sys; sys.path.append('..')
 import unittest
 from config_manager import ConfigManager
 from configuration import Configuration
@@ -7,11 +6,11 @@ from credentials import Credentials
 import config_constants
 from collections import namedtuple
 
-"""
-Prerequisites:
- - None
+"""TO RUN 
 
-Test all: 
+Ensure config_manager.py, configuration.py, credentials.py, and connection_info.py are all in the same directory as this
+
+in terminal: 
  - python test_config_manager.py 
 
 """
@@ -26,7 +25,7 @@ VALID_CONFIG_FILE = '''
   },
   "Cantabular Connection Information": {
     "address": "https://ftb-api-ext.ons.sensiblecode.io",
-    "port": null
+    "port": "8491"
   },
   "Nomis Credentials": {
     "username": "user",
@@ -58,7 +57,7 @@ INVALID_CONFIG_FILE = '''
   },
   "Cantabular Connection Information": {
     "address": "https://ftb-api-ext.ons.sensiblecode.io",
-    "port": null
+    "port": "8491"
   },
   "Nomis Credentials": {
     "username": "user",
@@ -151,22 +150,6 @@ class TestConfigManager(unittest.TestCase):
         config = self.config_manager.decode_configuration()
         self.assertIsInstance(config, Configuration)
         print(config.get_client("cantabular"))
-
-    def test_invalid_connection_info(self):
-        inv_con_info_1 = ConnectionInfo("unresolvable-address.not.real", 5001)
-        with self.assertRaises(ValueError):
-            inv_con_info_1.validate()
-        inv_con_info_2 = ConnectionInfo("http://localhost", 100000)
-        with self.assertRaises(ValueError):
-            inv_con_info_2.validate()
-
-    def test_invalid_credentials(self):
-        inv_creds_1 = Credentials("string", 99, None)
-        with self.assertRaises(TypeError):
-            inv_creds_1.validate()
-        inv_creds_2 = Credentials("", "string", "key")
-        with self.assertRaises(ValueError):
-            inv_creds_2.validate()
 
 
 if __name__ == '__main__':

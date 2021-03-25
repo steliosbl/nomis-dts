@@ -5,53 +5,42 @@ import os
 
 
 class Arguments:
-    """
-    Container class for the program's arguments; includes method for validating the arguments.
+    """Container class for the program's arguments; includes method for validating the arguments.
 
-    :param arguments: Parsed argparse object containing the arguments for the program.
-    :ivar transformation: String indicating whether the metadata or normal (i.e. data) program pipeline is used.
-    :vartype transformation: str
-    :ivar metadata: A bool that will be resolved to `True` if metadata mode is toggled. Otherwise, it will be `False`.
-    :vartype metadata: bool
-    :ivar suppress_prompts: Toggle for suppressing prompts.
-    :vartype suppress_prompts: bool
-    :ivar verbose: Toggle for a verbose out during runtime.
-    :vartype verbose: bool
-    :ivar filename: Location of a file to read from instead of querying Cantabular.
-    :vartype filename: Optional[str]
-    :ivar query_variables: Parameter for querying Cantabular.
-    :vartype query_variables: Optional[List[str]]
-    :ivar dataset_id: Parameter for querying Cantabular.
-    :vartype dataset_id: Optional[str]
-    :ivar dataset_title: Parameter for querying Cantabular.
-    :vartype dataset_title: Optional[str]
-    :ivar query_dataset: Parameter for querying Cantabular.
-    :vartype query_dataset: Optional[str]
-    :ivar log_file: For overriding the default location of the log file.
-    :vartype log_file: Optional[str]
-    :ivar config_file: For overriding the default location of the config file.
-    :vartype config_file: Optional[str]
+    :param arguments: Parsed argparse object containing the arguments for the program
+
+    :ivar metadata: Read in as a string and resolved to a Boolean: indicates whether the metadata or normal (i.e. data)
+    program pipeline is used
+    :ivar filename: Location of a file to read from instead of querying Cantabular
+    :ivar query_variables: Parameter for querying Cantabular
+    :ivar dataset_id: Parameter for querying Cantabular
+    :ivar dataset_title: Parameter for querying Cantabular
+    :ivar query_dataset: Parameter for querying Cantabular
+    :ivar suppress_prompts: Toggle for suppressing prompts
+    :ivar verbose: Toggle for a verbose out during runtime
+    :ivar log_file: For overriding the default location of the log file
+    :ivar config_file: For overriding the default location of the config file
     """
 
-    # # Metadata toggle
-    # metadata: Union[str, bool]
-    #
-    # # Location of a file to read from instead of querying Cantabular
-    # filename: Union[str, None]
-    #
-    # # Parameters for querying Cantabular
-    # query_variables: Union[List[str], str, None]
-    # dataset_id: Union[str, None]
-    # dataset_title: Union[str, None]
-    # query_dataset: Union[str, None]
-    #
-    # # Flags for toggling prompts to be suppressed of a verbose run
-    # suppress_prompts: bool
-    # verbose: bool
-    #
-    # # For overriding the default location of the log/config files
-    # log_file: Union[str, None]
-    # config_file: Union[str, None]
+    # Metadata toggle
+    metadata: Union[str, bool]
+
+    # Location of a file to read from instead of querying Cantabular
+    filename: Union[str, None]
+
+    # Parameters for querying Cantabular
+    query_variables: Union[List[str], str, None]
+    dataset_id: Union[str, None]
+    dataset_title: Union[str, None]
+    query_dataset: Union[str, None]
+
+    # Flags for toggling prompts to be suppressed of a verbose run
+    suppress_prompts: bool
+    verbose: bool
+
+    # For overriding the default location of the log/config files
+    log_file: Union[str, None]
+    config_file: Union[str, None]
 
     def __init__(self, arguments: argparse.Namespace) -> None:
         self.transformation = arguments.transformation
@@ -64,19 +53,16 @@ class Arguments:
         self.query_dataset = arguments.query_dataset
         self.suppress_prompts = arguments.suppress_prompts
         self.verbose = arguments.verbose
-        self.debug = arguments.debug
         self.log_file = arguments.log_file
         self.config_file = arguments.config_file
 
     def validate(self) -> bool:
-        """
-        Method for validating the arguments, and raising an exception in the case of anything invalid.
+        """Method for validating the arguments, and raising an exception in the case of anything invalid.
 
-        :return: Returns `True` upon successful validation; otherwise, an exception will have been raised.
-        :raises ValueError: If any included argument contains an empty string, or any required argument is excluded.
-        :raises FileNotFoundError: If the inputs for `filename` or `config_file` aren't paths to existing files.
-        :raises IOError: If the arguments for `filename` or `config_file` aren't suffixed by '.json', or if `log_file`
-            suffix isn't '.log'.
+        :return: Returns True upon successful validation; otherwise, an exception will have been raised
+        :raises ValueError: If any included argument contains an empty string, or any required argument is excluded
+        :raises FileNotFoundError: If the inputs for filename or config_file aren't paths to existing files
+        :raises IOError: If the arguments for filename or config_file aren't .json, or log_file isn't .log
         """
         # Resolve metadata
         if self.transformation == 'metadata':

@@ -4,17 +4,17 @@ from typing import (
     Dict,
     List,
     Tuple,
-    Any,
-    Optional
+    Any
 )
 
 """ 
 File for containing all (custom) type hints or namedtuples used throughout the program
 """
 
-NomisDataset = Dict[str, object]
-Variables = Dict[str, object]
-Dimensions = Dict[str, object]
-Observations = Dict[str, object]
-UuidMetadata = namedtuple("UuidMetadata", "uuid metadata")
-CredentialsConninfo = namedtuple("CredentialsConninfo", "credentials connection_info")
+NomisDataset = Dict[str, Union[str, bool, int, None]]
+Variables = Dict[str, Union[str, bool, None]]
+Dimensions = Dict[any, any]
+Codes = List[str]
+Observations = Dict[str, Union[str, Dimensions, Codes]]
+UuidMetadata = namedtuple("uuid_metadata", "uuid metadata")
+CredentialsConninfo = namedtuple("credentials_conninfo", "credentials connection_info")

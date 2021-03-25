@@ -4,30 +4,26 @@ from logging import getLogger
 from uuid import UUID
 import requests
 import json
+
 logger = getLogger('DTS-Logger')
 
 requests.packages.urllib3.disable_warnings()
 
 
 class NomisApiConnector(ApiConnector):
-    """
-    API Connector class for communicating with Nomis' main API. Provides the functionality of appending and altering
-    datasets and variables on the Nomis database through the Nomis API. This is the primary point of interaction
-    between the utility and the Nomis API, containing methods corresponding with all requests the program needs to make.
-    The class is easily extendable to contain more methods should requirements change.
+    """API Connector class for communicating with Nomis' main API. Provides the functionality of appending and altering
+    datasets and variables on the Nomis database through the Nomis API.
     """
 
-    def __init__(self, credentials, address, port=None, record_requests=True) -> None:
-        super().__init__(credentials, address, port, record_requests)
-        logger.info(f"Establishing connection with the Nomis API at {self.client}")
+    def __init__(self, credentials, address, port=None) -> None:
+        super().__init__(credentials, address, port)
 
     @staticmethod
     def validate_ds(ds: NomisDataset, id: str = None) -> bool:
-        """
-        Method for validating that a dataset is in the correct format and contains the required information.
+        """Method for validating that a dataset is in the correct format and contains the required information.
         Validation is done simply by first ensuring the dataset is the correct type (a Python dict), and then by
-        checking the individual keys in the dataset, ensuring they are all in the correct type and format, and, if
-        they aren't optional, that they exist at all.
+        checking the individual keys in the dataset, ensuring they are all in the correct type and format, and if they
+        aren't optional that they exist in the first place.
 
         :param ds: A dictionary representing a dataset ready to be transmitted to the Nomis server.
         :param id: Optionally, can include an id to verify that parameter id matches that of dataset
@@ -75,7 +71,7 @@ class NomisApiConnector(ApiConnector):
 
         # Ensure dataset UUID, if it has one, is in a valid uuid format
         try:
-            UUID(str(ds["uuid"]))
+            UUID(ds["uuid"])
 
         except ValueError:
             raise ValueError("ERROR: Dataset UUID is not a valid UUID.")
@@ -87,20 +83,19 @@ class NomisApiConnector(ApiConnector):
             raise ValueError("Dataset ID does not match parameter ID.")
 
         # This will be reached if and only if no exceptions are raised, indicating a valid dataset
-        logger.debug(f"SUCCESS: Dataset with {ds['id']} validated.")
+        logger.info(f"SUCCESS: Dataset with {ds['id']} validated.")
         return True
 
     @staticmethod
     def validate_id(id: str) -> bool:
-        """
-        Method for validating parameter IDs.
+        """Method for validating parameter IDs
 
         :param id: A string that is in a valid ID format.
 
         :raises TypeError: If the inputted id is not a string.
         :raises ValueError: If the inputted id is not in the correct format.
 
-        :return: `True` if the id is valid, otherwise an exception is raised.
+        :return: True if the id is valid, otherwise an exception is raised
         """
         if not isinstance(id, str):
             raise TypeError("Invalid id, must be a string.")
@@ -112,22 +107,21 @@ class NomisApiConnector(ApiConnector):
 
     # GET | PUBLIC
     def get_dataset(self, id: str, return_bool: bool = False) -> Union[NomisDataset, bool]:
-        """
-        Method for obtaining a dataset from the Nomis database by its uuid. Makes a GET request to the Nomis API
+        """Method for obtaining a dataset from the Nomis database by its uuid. Makes a GET request to the Nomis API
         at the /Datasets/{id} endpoint, and returns the dataset if the response code is 200; otherwise, an appropriate
         exception is raised. Alternatively, if the return_bool param is set to True, this method will simply check for
         the existence of a dataset and return a Boolean response.
 
         :param id: A string that is in a valid ID format.
         :param return_bool: Admin parameter; returns True or False instead of returning the dataset or raising
-            exception in the case of a 200 or 404 response.
+        exception in the case of a 200 or 404 response.
 
         :raises TypeError: If the validate_id() method detects that the id is not a string.
         :raises ValueError: If the validate_id() method detects that the dataset uuid is not in the correct UUID format.
         :raises requests.HTTPError: If either connecting to the API is unsuccessful or a negative response is received.
 
         :return: If the request is successful, then return the dataset associated with the inputted ID. Alternatively,
-            if `return_bool` is `True`, then return `True` if the dataset exists, otherwise return `False`.
+        if return_bool=True, return True if dataset exists, else False
         """
         # Type/value checking
         self.validate_id(id)
@@ -147,10 +141,10 @@ class NomisApiConnector(ApiConnector):
         # If the dataset exists, the response code will be 200; other responses correspond to the API documentation.
         if res.status_code == 200:
             if return_bool:
-                logger.debug(f"Dataset with id '{id}' exists.")
+                logger.info(f"Dataset with id '{id}' exists.")
                 return True
 
-            logger.debug(f"Dataset with id '{id}' found.")
+            logger.info("Dataset found.")
             return res.json()
 
         elif res.status_code == 400:
@@ -158,7 +152,7 @@ class NomisApiConnector(ApiConnector):
 
         elif res.status_code == 404:
             if return_bool:
-                logger.debug(f"Dataset with id '{id}' does not exist.")
+                logger.info(f"Dataset with id '{id}' does not exist.")
                 return False
 
             raise requests.HTTPError(f"Dataset (id: {id}) not found.")
@@ -168,8 +162,7 @@ class NomisApiConnector(ApiConnector):
 
     # PUT | DATASET-ADMIN - WILL REQUIRE AUTH.
     def create_dataset(self, id: str, ds: NomisDataset) -> bool:
-        """
-        Method for uploading a dataset to the Nomis database. Makes a PUT request to the /Datasets/{id} endpoint,
+        """Method for uploading a dataset to the Nomis database. Makes a PUT request to the /Datasets/{id} endpoint,
         with a valid Dataset object encoded into JSON as the body. True is returned by the method if the dataset
         creation is successful (i.e., a 200 code is received), otherwise an appropriate exception is raised.
 
@@ -202,22 +195,21 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug("Dataset created successfully.")
+            logger.info("Dataset created successfully.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameter.")
         elif res.status_code == 404:
-            logger.debug(res.text)
+            logger.info(res.text)
             raise requests.HTTPError(f"Dataset (id: '{id}') already exists.")
         else:
             raise Exception(f"Unexpected response with status code {res.status_code}.")
 
     # GET | PUBLIC
     def get_dataset_dimensions(self, id: str, return_bool: bool = False) -> Union[List[Dimensions], bool]:
-        """
-        Method for retrieving dataset dimensions for a dataset with the parameter ID. Makes a GET request to the
-        /Datasets/{id}/dimensions endpoint. If successful, then the dimensions are returned by the method, otherwise
-        an appropriate exception is raised.
+        """Method for retrieving dataset dimensions for a dataset with the parameter ID. Makes a GET request to the
+        /Datasets/{id}/dimensions endpoint. If successful, then the dimensions are returned by the method, otherwise an
+        appropriate exception is raised.
 
         :param id: A string that is in a valid id format.
         :param return_bool: Return a bool instead of the dimensions themselves
@@ -245,7 +237,7 @@ class NomisApiConnector(ApiConnector):
         # Handle response
         if res.status_code == 200:
             # If the request is successful, return the dimensions in the form of an array.
-            logger.debug("Dataset dimensions retrieved successfully.")
+            logger.info("Dataset dimensions retrieved successfully.")
             if return_bool:
                 return True
             return res.json()
@@ -260,8 +252,7 @@ class NomisApiConnector(ApiConnector):
 
     # PUT | DATASET-ADMIN
     def assign_dimensions_to_dataset(self, id: str, dims: Union[list, dict]) -> bool:
-        """
-        Method for assigning dimensions to a dataset which exists in the Nomis database.
+        """Method for assigning dimensions to a dataset which exists in the Nomis database.
 
         :param id: A string that is in a valid id format.
         :param dims: Object representing the dimensions.
@@ -270,7 +261,7 @@ class NomisApiConnector(ApiConnector):
         :raises ValueError: If the validate_id() method detects that the inputted id is not in the correct UUID format.
         :raises requests.HTTPError: If either connecting to the API is unsuccessful or a negative response is received.
 
-        :return: `True` if dimensions are assigned successfully, otherwise an exception is raised.
+        :return: True if dimensions are assigned successfully, otherwise an exception is raised.
         """
         # Type/value checking
         self.validate_id(id)
@@ -293,7 +284,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug("Dimensions assigned successfully.")
+            logger.info("Dimensions assigned successfully.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError(f"Bad input parameters. ({res.text}).")
@@ -310,20 +301,18 @@ class NomisApiConnector(ApiConnector):
 
     # POST | DATASET-ADMIN
     def append_dataset_observations(self, id: str, obs: Observations) -> bool:
-        """
-        Method for appending observations to a dataset in the database.
+        """Method for appending observations to a dataset in the database.
 
         :param id: A string that is in a valid id format.
         :param obs: Object representing observation values.
 
         :raises TypeError: If the validate_id() method detects that the id is not a string, or due to invalid
-            observations.
+        observations
         :raises ValueError: If the validate_id() method detects that the inputted id is not in the correct UUID format.
         :raises requests.HTTPError: If either connecting to the API is unsuccessful or a negative response is received.
 
-        :return: Unless an exception is raised, `True` is returned indicating a successful request.
+        :return: Unless an exception is raised, True is returned indicated a successful request.
         """
-
         # Validation
         self.validate_id(id)
         if not isinstance(obs, (list, dict)):
@@ -345,7 +334,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug("Observations appended successfully.")
+            logger.info("Observations appended successfully.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.\n", res.json())
@@ -356,23 +345,23 @@ class NomisApiConnector(ApiConnector):
 
     # PUT | DATASET-ADMIN
     def overwrite_dataset_observations(self, id: str, obs_arr: Union[list, dict]) -> bool:
-        """
-        Method for overwriting the observations of a dataset in the Nomis database.
+        """Method for overwriting the observations of a dataset in the Nomis database.
 
         :param id: A string that is in a valid id format.
         :param obs_arr: Array of objects representing data values.
 
         :raises TypeError: If the validate_id() method detects that the id is not a string, or due to invalid
-            observations.
-        :raises ValueError: If the validate_id() method detects that the inputted id is not in the correct UUID format.
+        observations
+        :raises ValueError: If the validate_id() method detects that the inputted id is not
+        in the correct UUID format.
         :raises requests.HTTPError: If either connecting to the API is unsuccessful or a negative response is received.
 
-        :return: Unless an exception is raised, `True` is returned indicating a successful request.
+        :return: Unless an exception is raised, True is returned indicated a successful request.
         """
         # Validation
         self.validate_id(id)
         if not isinstance(obs_arr, (list, dict)):
-            logger.debug("Invalid observations array.")
+            logger.info("Invalid observations array.")
             return False
 
         # Make request: Create or update all observation values.
@@ -391,7 +380,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug("Observations replaced successfully.")
+            logger.info("Observations replaced successfully.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.")
@@ -405,8 +394,7 @@ class NomisApiConnector(ApiConnector):
     # GET | PUBLIC
     def get_variable(self, name: Union[str, None] = None,
                      return_bool: bool = False) -> Union[Variables, List[Variables], bool]:
-        """
-        Method for retrieving an existing variable, or simply checking for its existence and returning a Boolean
+        """Method for retrieving an existing variable, or simply checking for its existence and returning a Boolean
         confirmation.
 
         :param name: Unique name of the variable.
@@ -435,13 +423,13 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"Queried variable (name: '{name}') retrieved.")
+            logger.info(f"Queried variable (name: '{name}') retrieved.")
             return res.json()
         elif res.status_code == 400:
             raise requests.HTTPError(f"Bad input parameters. (Response: {res.text})")
         elif res.status_code == 404:
             if return_bool:
-                logger.debug(f"Queried variable (name: '{name}') does not exist.")
+                logger.info(f"Queried variable (name: '{name}') does not exist.")
                 return False
             raise requests.HTTPError(f"Queried variable (name: '{name}') not found. (Response: {res.text})")
         else:
@@ -449,8 +437,7 @@ class NomisApiConnector(ApiConnector):
 
     # PUT | VARIABLE-ADMIN
     def create_variable(self, name: str, var: dict) -> bool:
-        """
-        Method for creating a new variable.
+        """Method for creating a new variable.
 
         :param name: Unique name of the variable.
         :param var: Object representing the variable. Must be a valid dict.
@@ -483,7 +470,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"Variable (name: '{name}') created successfully.")
+            logger.info(f"Variable (name: '{name}') created successfully.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.")
@@ -494,8 +481,7 @@ class NomisApiConnector(ApiConnector):
 
     # GET | PUBLIC
     def get_variable_categories(self, name: str) -> list:
-        """
-        Method for retrieving the categories of a variable by name.
+        """Method for retrieving the categories of a variable by name
 
         :param name: Unique name of the variable.
 
@@ -522,7 +508,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"Queried variable categories retrieved for variable '{name}'.")
+            logger.info(f"Queried variable categories retrieved for variable '{name}'.")
             return res.json()
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.")
@@ -533,8 +519,7 @@ class NomisApiConnector(ApiConnector):
 
     # PUT | VARIABLE-ADMIN
     def create_variable_category(self, name: str, cat_arr: list) -> bool:
-        """
-        Method for adding variable categories to a variable in the dataset.
+        """Method for adding variable categories to a variable in the dataset.
 
         :param name: Unique name of the variable.
         :param cat_arr: Array of dimension categories.
@@ -567,7 +552,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"Variable categories created successfully for variable '{name}'.")
+            logger.info(f"Variable categories created successfully for variable '{name}'.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.")
@@ -578,30 +563,29 @@ class NomisApiConnector(ApiConnector):
 
     # POST | VARIABLE-ADMIN
     def update_variable_category(self, name: str, code: str, cat: dict) -> bool:
-        """
-        Method for updating a specific variable category.
+        """Method for updating a specific variable category
 
         :param name: Unique name of the variable.
         :param code: Category code
         :param cat: Partial object representing a variable category.
 
         :raises TypeError: If the name param is not a string, the cat param is not a valid category, or the code is
-            invalid.
+        invalid.
         :raises ValueError: If the name param is not in a valid format.
         :raises requests.HTTPError: If either connecting to the API is unsuccessful or a negative response is received.
 
         :return: True will be returned upon a successful request; an appropriate error will be raised otherwise.
         """
-
+        print(cat)
         # Validation
         if not isinstance(name, str):
-            logger.debug("Invalid name, must be a string.")
+            logger.info("Invalid name, must be a string.")
             return False
         elif not isinstance(code, str):
-            logger.debug("Code invalid type.")
+            logger.info("Code invalid type.")
             return False
         elif not isinstance(cat, dict):
-            logger.debug("Invalid category array.")
+            logger.info("Invalid category array.")
             return False
 
         # Make request: Partially update category.
@@ -620,7 +604,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"Variable category updated successfully for variable '{name}'.")
+            logger.info(f"Variable category updated successfully for variable '{name}'.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.")
@@ -631,8 +615,7 @@ class NomisApiConnector(ApiConnector):
 
     # PUT | VARIABLE-ADMIN
     def create_variable_type(self, name: str, type_arr: list) -> bool:
-        """
-        Method for adding variable types to a variable in the dataset.
+        """Method for adding variable types to a variable in the dataset.
 
         :param name: Unique name of the variable.
         :param type_arr: Array of dimension types.
@@ -665,7 +648,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"Variable types created successfully for variable '{name}'.")
+            logger.info(f"Variable types created successfully for variable '{name}'.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.")
@@ -676,12 +659,10 @@ class NomisApiConnector(ApiConnector):
 
     # PUT | VARIABLE-ADMIN
     def update_variable_type(self, variable_id: str, type_id: str, var_type: dict) -> bool:
-        """
-        Method for updating a variable type for a variable in the dataset.
+        """Method for updating a variable type for a variable in the dataset.
 
-        :param variable_id: Unique ID of the variable.
-        :param type_id: The ID of the specific type.
-        :param var_type: Dimension type.
+        :param name: Unique name of the variable.
+        :param var_type: dimension type.
 
         :raises TypeError: If the variable_id param is not a string, or the var_type param is not a valid dict, or the type_id param is not a string.
         :raises ValueError: If the variable_id or type_id param is not in a valid format.
@@ -713,7 +694,7 @@ class NomisApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"Variable types created successfully for variable '{variable_id}'.")
+            logger.info(f"Variable types created successfully for variable '{variable_id}'.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError("Bad input parameters.")

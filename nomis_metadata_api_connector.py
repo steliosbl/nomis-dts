@@ -10,28 +10,29 @@ requests.packages.urllib3.disable_warnings()
 
 Metadata = Dict[str, Union[str, List[str]]]
 
+"""
+INFO
+
+
+"""
+
 
 class NomisMetadataApiConnector(ApiConnector):
-    """
-    Class for communicating directly with the Nomis metadata API; includes methods for retrieving metadata (by object
-    or metadata ID), adding new/overwriting metadata, and updating existing metadata. This is the central hub of
-    communication between the Nomis metadata API and the utility. It is easily extendable to contain more methods
-    should the requirements change necessitating additional requests.
+    """Class for communicating directly with the Nomis metadata API; includes methods for retrieving metadata (by object
+    or metadata ID), adding new/overwriting metadata, and updating existing metadata.
     """
 
-    def __init__(self, credentials, address, port=None, record_requests=None) -> None:
-        super().__init__(credentials, address, port, record_requests)
-        logger.info(f"Establishing connection with the Nomis Metadata API at {self.client}.")
+    def __init__(self, credentials, address, port=None) -> None:
+        super().__init__(credentials, address, port)
 
     @staticmethod
     def validate_uuid(id: str) -> bool:
-        """
-        Method for validating the id of a dataset.
+        """Method for validating the id of a dataset
 
-        :raises TypeError: If the dataset's id is not a string.
-        :raises ValueError: If the dataset is not in a valid uuid format.
+        :raises TypeError: If the dataset's id is not a string
+        :raises ValueError: If the dataset is not in a valid uuid format
 
-        :return: `True` if the id is valid, otherwise an exception is raised.
+        :return: True if the id is valid, otherwise an exception is raised
         """
         if not isinstance(id, str):
             raise TypeError(f"The uuid of the dataset ({id}) is not a valid string.")
@@ -45,14 +46,13 @@ class NomisMetadataApiConnector(ApiConnector):
 
     @staticmethod
     def validate_metadata(metadata: Union[List[Metadata], Metadata], id: str = None) -> bool:
-        """
-        Method for validating metadata, in terms of format and contents.
+        """Method for validating metadata
 
         :raises TypeError: If the metadata is not in the correct type (i.e., a Python dict), or if validate_uuid()
-            detects a type error.
-        :raises ValueError: If validate_uuid() detects a value error.
+        detects a type error
+        :raises ValueError: If validate_uuid() detects a value error
 
-        :return: `True` if the metadata is valid, otherwise an exception is raised.
+        :return: True if the metadata is valid, otherwise an exception is raised
         """
         if not isinstance(metadata, (list, dict)):
             raise TypeError("Metadata in invalid format.")
@@ -74,8 +74,7 @@ class NomisMetadataApiConnector(ApiConnector):
         return True
 
     def get_all_metadata(self) -> List[Metadata]:
-        """
-        Method to retrieve all of the metadata on the server.
+        """Method to retrieve all of the metadata on the server.
 
         :raises requests.ConnectionError: If an error occurs whilst attempting to communicate with the API.
         :raises requests.HTTPError: If a negative response is received from the API.
@@ -90,25 +89,24 @@ class NomisMetadataApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"SUCCESS: Metadata retrieved.")
+            logger.info(f"SUCCESS: Metadata retrieved.")
             return res.json()
         elif res.status_code == 404:
             raise requests.HTTPError("Metadata not found")
 
     def get_metadata_for_object(self, id: str, return_bool: bool = False) -> Union[List[Metadata], bool]:
-        """
-        This takes a uuid representing the id of an object in the database as a parameter, and it makes a GET request
+        """This takes a uuid representing the id of an object in the database as a parameter, and it makes a GET request
         to retrieve the metadata associated with this object.
 
-        :param id: Valid string in uuid format representing the id of an object in the Nomis database.
+        :param id: Valid string in uuid format representing the id of an object in the Nomis database
         :param return_bool: Boolean toggle where, if set to True, will force the method to return a Boolean instead of
-            the metadata.
+        the metadata.
 
         :raises requests.ConnectionError: If an error occurs whilst attempting to communicate with the API.
         :raises requests.HTTPError: If a negative response is received from the API.
 
         :return: The metadata for the object with the inputted id, if it exists; otherwise, an exception will be raised.
-            Alternatively, if `return_bool` is set to `True`, return True if the metadata exists and False otherwise.
+        Alternatively, if return_bool=True, return True if the metadata exists and False otherwise.
         """
         # Ensure the ID is a correct string
         self.validate_uuid(id)
@@ -123,30 +121,30 @@ class NomisMetadataApiConnector(ApiConnector):
         if res.status_code == 200:
             if return_bool:
                 if len(res.json()) == 0:
-                    logger.debug(f"Request successful, but there is no metadata for the object with ID {id}.")
+                    logger.info(f"Request successful, but there is no metadata for the object with ID {id}.")
                     return False
                 else:
-                    logger.debug(f"Metadata for object with id {id} retrieved.")
+                    logger.info(f"Metadata for object with id {id} retrieved.")
                     return True
-            logger.debug(f"Metadata for object with ID {id} retrieved.")
+            logger.info(f"Metadata for object with ID {id} retrieved.")
             return res.json()
         else:
             if return_bool:
-                logger.debug(f"Metadata for object with id {id} not found")
+                logger.info(f"Metadata for object with id {id} not found")
                 return False
             raise requests.HTTPError(f"Metadata for object with id {id} not found.")
 
     def get_metadata_by_id(self, id: str, return_bool: bool = False) -> Union[Metadata, bool]:
-        """
-        This takes a uuid representing the id of some metadata in the database as a parameter, and makes a GET request
-        to retrieve this metadata. NOTE that this is strictly distinct from the previous method: the uuid of metadata
-        is not necessarily the same as the uuid of the object it represents (and some metadata represents no object).
+        """This takes a uuid representing the id of some metadata in the database as a parameter, and makes a GET
+        request to retrieve this metadata. NOTE that this is strictly distinct from the previous method: the uuid of
+        metadata is not necessarily the same as the uuid of the object it represents (and some metadata represents no
+        object).
 
-        :param id: Valid string representing the ID of some metadata in the Nomis database.
+        :param id: Valid string representing the ID of some metadata in the Nomis database
         :param return_bool: Forces method to return True or False instead of returning the metadata or raising an
-            exception in the case of a 200 or 404 response.
+        exception in the case of a 200 or 404 response.
 
-        :return: `False` if the id doesn't exist, is invalid, or has no associated metadata; the metadata, otherwise
+        :return:   False if the id doesn't exist, is invalid, or has no associated metadata; the metadata, otherwise
         """
         try:
             # Ensure the ID is a correct string
@@ -162,12 +160,12 @@ class NomisMetadataApiConnector(ApiConnector):
             if res.status_code == 200:
                 if return_bool:
                     if len(res.json()) == 0:
-                        logger.debug(f"There is no metadata with the ID {id}.")
+                        logger.info(f"There is no metadata with the ID {id}.")
                         return False
                     else:
-                        logger.debug(f"Metadata with id {id} retrieved.")
+                        logger.info(f"Metadata with id {id} retrieved.")
                         return True
-                logger.debug(f"Metadata with ID {id} retrieved.")
+                logger.info(f"Metadata with ID {id} retrieved.")
                 return res.json()
             else:
                 if return_bool:
@@ -175,26 +173,25 @@ class NomisMetadataApiConnector(ApiConnector):
                 raise requests.HTTPError(f"Metadata with id {id} not found")
 
         except (requests.ConnectionError, requests.HTTPError):
-            logger.debug("ERROR: Unable to connect to the metadata API.")
+            logger.info("ERROR: Unable to connect to the metadata API.")
         except Exception as e:
-            logger.debug(f"ERROR: Unexpected error occurred when attempting to retrieve metadata by ID. ({str(e)})")
+            logger.info(f"ERROR: Unexpected error occurred when attempting to retrieve metadata by ID. ({str(e)})")
         return False
 
     def add_new_metadata(self, metadata: Union[List[Metadata]], return_uuids: bool = False) -> Union[List[str], bool]:
-        """
-        This takes an object representing an instance of Metadata and makes a POST request that adds this metadata to
-        the server. This metadata is not required to have anything for its id: if it has no id then the API will
-        generate a uuid for it automatically. If it does have an id, it must be in a valid uuid format, if not then the
-        server will respond with an error (I have added a method to verify the uuid before the request is made). As a
-        warning, the server will OVERWRITE any metadata on the server that has the same id as what is being posted.
-        Therefore, calling the get_metadata_by_id() method prior to this method is worthwhile to check whether we will
-        or won't overwrite anything by calling this method. This method returns the uuid of the metadata that was
-        appended to the server.
+        """This takes an object representing an instance of Metadata (see the type definition above) and makes a POST
+        request that adds this metadata to the server. This metadata is not required to have anything for its id: if it
+        has no id then the API will generate a uuid for it automatically. If it does have an id, it must be in a valid
+        uuid format, if not then the server will respond with an error (I have added a method to verify the uuid before
+        the request is made). As a warning, the server will OVERWRITE any metadata on the server that has the same id as
+        what is being posted. Therefore, calling the get_metadata_by_id() method prior to this method is worthwhile to
+        check whether we will or won't overwrite anything by calling this method. This method returns the uuid of the
+        metadata that was appended to the server.
 
-        :param metadata: Valid list of dictionary of strings representing metadata.
-        :param return_uuids: Toggle for returning uuids instead of a boolean confirmation - for testing purposes.
+        :param metadata: Valid list of dictionary of strings representing metadata
+        :param return_uuids: Toggle for returning uuids instead of a boolean confirmation - for testing purposes
 
-        :return: Bool indicating the success of the request, or the ids of the appended datasets if toggled for.
+        :return: Bool indicating the success of the request, or the ids of the appended datasets if toggled for
         """
         # Establish headers
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -211,7 +208,7 @@ class NomisMetadataApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 200:
-            logger.debug(f"SUCCESS: New metadata added successfully")
+            logger.info(f"SUCCESS: New metadata added successfully")
             if return_uuids:
                 ids = []
                 for ds in res.json():
@@ -226,16 +223,15 @@ class NomisMetadataApiConnector(ApiConnector):
             raise requests.HTTPError(f"Unexpected status code: {res.status_code}. ({res.text})")
 
     def update_metadata_association(self, id: str, metadata: Metadata) -> bool:
-        """
-        As above, this method takes an instance of Metadata as a parameter, but it also requires a valid uuid as an
+        """As above, this method takes an instance of Metadata as a parameter, but it also requires a valid uuid as an
         additional parameter. This method entails making a PUT request that will update any existing metadata, or create
         some new metadata if the id does not exist on the server. The metadata object here can be "incomplete", in which
         case it will only update the included fields upon making the request; however, the metadata must have a valid
         id, and this id must match the one passed to the method in the parameters.
 
-        :param id: Valid string representing the ID of some metadata in the Nomis database.
-        :param metadata: Valid dictionary of strings representing metadata attributes (must include belongsTo).
-        :return: Bool indicating the success of the request.
+        :param id: Valid string representing the ID of some metadata in the Nomis database
+        :param metadata: Valid dictionary of strings representing metadata attributes (must include belongsTo)
+        return: Bool indicating the success of the request
         """
         # Establish headers
         headers = {'Content-type': 'application/json', 'Accept': 'application/json'}
@@ -258,7 +254,7 @@ class NomisMetadataApiConnector(ApiConnector):
 
         # Handle response
         if res.status_code == 201:
-            logger.debug(f"Metadata with ID {id}{belongs_to} successfully updated.")
+            logger.info(f"Metadata with ID {id}{belongs_to} successfully updated.")
             return True
         elif res.status_code == 400:
             raise requests.HTTPError(f"Unable to update metadata with ID {id}{belongs_to} due to a bad request.")

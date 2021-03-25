@@ -4,19 +4,11 @@ import argparse
 
 
 class ArgsManager:
-    """
-    Class for handling the input arguments, utilising the argparse library module. Allows for command line arguments
-    in the following formats:
+    """Class for handling the input arguments, utilising the argparse library module. Allows for command line arguments
+    in the form:
+    - filename.py {metadata | data} -f {FILENAME (optional)} -q {QUERY in quotes} -i {ID} -t {TITLE} -y (for yes to all prompts) -v (for verbose)
 
-    For handling `data`:
-    - prog data -f {FILENAME (optional)} -q {QUERY in quotes} -i {ID} -t {TITLE} -y (for yes to all prompts) -v (for verbose)
-
-    For handling `metadata`:
-    - prog metadata -f {FILENAME} -r {METADATA FORMAT}
-
-
-    :ivar parser: An argparse `ArgumentParser` object for collecting arguments from the terminal.
-    :vartype parser: ArgumentParser.
+    :ivar parser: An argparse ArgumentParser object for collecting arguments from the terminal
     """
 
     def __init__(self) -> None:
@@ -98,13 +90,6 @@ class ArgsManager:
             default=False
         )
         self.parser.add_argument(
-            '-db',
-            '--debug',
-            action="store_true",
-            help="debug",
-            default=False
-        )
-        self.parser.add_argument(
             '-c',
             '--config-file',
             action="store",
@@ -116,7 +101,7 @@ class ArgsManager:
             '-l',
             '--log-file',
             action="store",
-            help="path for non-default log file",
+            help="path for non-default config file",
             type=str,
             default=None
         )
@@ -128,11 +113,10 @@ class ArgsManager:
         pass
 
     def decode_arguments(self) -> 'Arguments':
-        """
-        Method for decoding the arguments collected by the parser into an instance of `Arguments`, and then
-        calling the `Arguments` validate() method.
+        """Method for decoding the arguments collected by the parser into an instance of :class:Arguments, and then
+        calling the :class:Arguments validate() method.
 
-        :return: A validated instance of `Arguments` corresponding with the terminal inputs.
+        :return: A validated instance of :class:Arguments corresponding with the terminal inputs
         """
         args = Arguments(self.parser.parse_args())
         args.validate()

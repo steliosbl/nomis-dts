@@ -1,24 +1,8 @@
-import sys; sys.path.append("..")
 from unittest.mock import patch
 from args_manager import ArgsManager
 from arguments import Arguments
 import unittest
-
-"""
-Prerequisites:
- - None
-
-To run all tests:
- - python test_args_manager.py
-
-To run specific tests:   
- - python -m unittest test_args_manager.TestArgsManager.[test]
-for instance,
- - python -m unittest test_args_manager.TestArgsManager.test_args_existing_files
- - python -m unittest test_args_manager.TestArgsManager.test_valid_args
-
-Note: include -b flag to silence stdout
-"""
+import sys
 
 
 class TestArgsManager(unittest.TestCase):
