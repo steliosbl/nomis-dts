@@ -17,8 +17,9 @@ This repository contains
 
 ## Branches
 
- - [**`master`**](https://github.com/stelioslogothetis/nomis-dts/tree/master): Contains the most up-to-date source code for development/testing/marking
+ - [**`master`**](https://github.com/stelioslogothetis/nomis-dts/tree/master): Contains the most up-to-date source code for development/testing
  - [**`live`**](https://github.com/stelioslogothetis/nomis-dts/tree/live): Contains a modified version, for use with the live Nomis database
+ - [**`submission`**](https://github.com/stelioslogothetis/nomis-dts/tree/submission): Contains all the files for the submission of the product to Durham University for marking
 # Setup
 ## Pre-requisites
 The utility is written in Python. To guarantee a successful run please ensure you are using Python 3.8 or above. The following libraries are required:
