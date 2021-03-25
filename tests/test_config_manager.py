@@ -152,6 +152,22 @@ class TestConfigManager(unittest.TestCase):
         self.assertIsInstance(config, Configuration)
         print(config.get_client("cantabular"))
 
+    def test_invalid_connection_info(self):
+        inv_con_info_1 = ConnectionInfo("unresolvable-address.not.real", 5001)
+        with self.assertRaises(ValueError):
+            inv_con_info_1.validate()
+        inv_con_info_2 = ConnectionInfo("http://localhost", 100000)
+        with self.assertRaises(ValueError):
+            inv_con_info_2.validate()
+
+    def test_invalid_credentials(self):
+        inv_creds_1 = Credentials("string", 99, None)
+        with self.assertRaises(TypeError):
+            inv_creds_1.validate()
+        inv_creds_2 = Credentials("", "string", "key")
+        with self.assertRaises(ValueError):
+            inv_creds_2.validate()
+
 
 if __name__ == '__main__':
     unittest.main()
