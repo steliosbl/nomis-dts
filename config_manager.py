@@ -101,6 +101,20 @@ class ConfigManager:
             raise KeyError(f"{key} missing 'port' attribute.")
         return json.loads(conn_info, object_hook=lambda d: ConnectionInfo(**d))
 
+    def decode_geography_variables(self, key: str) -> List[str]:
+        """Create an instance of the geography variables based on the content of the config file for the 'key' parameter
+
+        :return: A list containing the geography variables
+        """
+        try:
+            geography_variables = json.dumps(self.config[key])
+        except KeyError:
+            logger.info(f"Config file does not contain sufficient {key}. Using default config.")
+            geography_variables = json.dumps(self.default[key])
+
+        return json.loads(geography_variables)
+
+
     def decode_configuration(self) -> Configuration:
         """Create an instance of Configuration by combining an instances of Credentials and ConnectionInfo for each of
         the APIs that the program will communicate with.
@@ -123,8 +137,13 @@ class ConfigManager:
             for name, creds, conn in api_config_details
         }
 
+        configurations["geography"] = self.decode_geography_variables("Geography Variables")
+
         for api in configurations:
+            if api == "geography":
+                continue
             configurations[api].credentials.validate()
             configurations[api].connection_info.validate()
+
 
         return Configuration(configurations)

@@ -9,9 +9,13 @@ class DatasetTransformations:
     :ivar table: initial value: table
     """
 
-    def __init__(self, table: pyjstat.Dataset = None):
+    def __init__(self, geography_flag: bool, table: pyjstat.Dataset = None, table_geography: pyjstat.Dataset = None):
         self.table = table
+        self.geography_flag = geography_flag
+        self.table_geography = table_geography
         self.validate_table()
+
+
 
     def validate_table(self):
         """Method for validating the table, ensuring it is of the correct type and contains sufficient keys
@@ -46,8 +50,8 @@ class DatasetTransformations:
         ds = {
             "id": dataset_id,
             "title": dataset_title,
-            "contactId": None,
-            "isAdditive": False,
+            "contactId": "Census",
+            "isAdditive": True,
             "isFlagged": False,
             "derivedFrom": None,
             "restrictedAccess": False,
@@ -71,11 +75,34 @@ class DatasetTransformations:
             for dimension in self.table["dimension"]]
         return requests
 
-    def category_creation(self) -> List[Variables]:
+    def type_creation(self) -> List[Variables]:
+        """Method for creating a valid variable type using the pyjstat dataframe  for communication
+        with the Nomis API
+
+        :raises KeyError: If the dataframe doesn't contain any dimension information
+        :return: A list of types (should usually be a single dictionary inside of a list)
+        """
+        requests = []
+        for dimension in self.table["dimension"]:
+            requests.append(
+                {
+                    "id": "1000000",
+                    "reference": dimension,
+                    "title": self.table["dimension"][dimension]["label"],
+                    "titlePlural": self.table["dimension"][dimension]["label"],
+                }           
+            )
+        return requests
+
+    def category_creation(self, type_ids) -> List[Variables]:
         """Method for constructing a list of variable categories, using the jsonstat table retrieved from cantabular
         :return: A list of variable categories
         """
+        if not isinstance(type_ids, list):
+            raise TypeError("Invalid type_ids param, must be a list.")
+
         requests = []
+        counter = 0
         for dimension in self.table["dimension"]:
             for label in self.table["dimension"][dimension]["category"]["label"]:
                 requests.append(
@@ -83,39 +110,74 @@ class DatasetTransformations:
                         "code": label,
                         "title": self.table["dimension"][dimension]["category"]["label"][label],
                         "ancestors": None,
-                        "typeId": None,
+                        "typeId": type_ids[counter],
                         "validity": {
                             "select": True,
                             "make": False
                         }
                     }
                 )
+            counter += 1
         return requests
 
-    def assign_dimensions(self) -> List[Dimensions]:
+    def assign_dimensions(self, key: str) -> List[Dimensions]:
         """Method for using the jsonstat table to construct a list of dimensions, based on the initial query to
         cantabular
         :return: A list of dataset dimensions
         """
-        requests = [{
-            "name": dimension,
-            "label": self.table["dimension"][dimension]["label"],
-            "isAdditive": True,
-            "variable": {
-                "name": dimension,
-                "view": None
-            },
-            "role": "Measures",
-            "canFilter": True,
-            "defaults": self.table["dimension"][dimension]["category"]["index"],
-            "database": {
-                "isKey": False,
-                "index": 0,
-                "defaultView": None,
-                "discontinuities": None
-            },
-        }
-            for dimension in self.table["dimension"]]
+
+        requests = []
+        index = 0
+        if self.geography_flag is True:
+            requests.append(
+                {
+                    "name": "geography",
+                    "label": "geography",
+                    "isAdditive": True,
+                    "variable": {
+                        "name": "geography",
+                        "view": None
+                    },
+                    "role": "Spatial",
+                    "canFilter": True,
+                    "defaults": None, #self.table["dimension"][dimension]["category"]["index"],
+                    "database": {
+                        "isKey": True,
+                        "index": index,
+                        "defaultView": None,
+                        "discontinuities": None
+                    },
+                }
+            )
+            index += 1            
+
+        for dimension in self.table["dimension"]:
+            if dimension == key:
+                is_key = True
+            else:
+                is_key = False
+            requests.append(
+                {
+                    "name": dimension,
+                    "label": self.table["dimension"][dimension]["label"],
+                    "isAdditive": True,
+                    "variable": {
+                        "name": dimension,
+                        "view": None
+                    },
+                    "role": "Normal",
+                    "canFilter": True,
+                    "defaults": None,
+                    "database": {
+                        "isKey": is_key,
+                        "index": index,
+                        "defaultView": None,
+                        "discontinuities": None
+                    },
+                }
+            )
+            index += 1
+            
         return requests
 
     def observations(self, dataset_id: str) -> Observations:
@@ -129,19 +191,31 @@ class DatasetTransformations:
         if len(dataset_id) == 0:
             raise ValueError(f"The dataset id must not be empty.")
 
+        if self.table_geography is None:
+            data = self.table
+        else:
+            data = self.table_geography
+
         dimensions = []
         codes = []
 
-        for dimension in self.table["dimension"]:
+        counter = 0
+        for dimension in data["dimension"]:
+            if counter == 0:
+                dimensions.append("geography")
+                codes.append(data["dimension"][dimension]["category"]["index"])
+                counter += 1
+                continue
+
             dimensions.append(dimension)
-            codes.append(self.table["dimension"][dimension]["category"]["index"])
+            codes.append(data["dimension"][dimension]["category"]["index"])
 
         return (
             {
                 "dataset": dataset_id,
                 "dimensions": dimensions,
                 "codes": codes,
-                "values": self.table["value"],
+                "values": data["value"],
                 "statuses": None
             }
         )

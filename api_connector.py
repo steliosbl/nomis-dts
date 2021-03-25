@@ -46,7 +46,7 @@ class ApiConnector:
             request = "N/A" if res.request.body is None else json.dumps(json.loads(res.request.body), indent=4)
             try:
                 response = json.dumps(res.json(), indent=4)
-            except json.decoder.JSONDecodeError:
+            except ValueError:
                 response = "N/A"
 
         responses_directory = os.path.join('responses')

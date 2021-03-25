@@ -40,3 +40,9 @@ class Configuration:
                 return str(self.config[api.lower()].connection_info.address)
         except KeyError:
             raise ValueError(f"API {api} not recognised.")
+
+    def get_geography(self) -> List[str]:
+        try:
+            return self.config["geography"]
+        except KeyError:
+            raise KeyError(f"Geography is not recognised")
